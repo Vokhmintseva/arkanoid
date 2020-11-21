@@ -38,24 +38,29 @@ void pollEvents(sf::RenderWindow &window)
     }
 }
 
-// Рисует и выводит один кадр
-void redrawFrame(sf::RenderWindow &window, Brick *bricks)
+void drawBricks(sf::RenderWindow &window, Brick *bricks)
 {
-    window.clear(sf::Color::White);
-    //int length = sizeof(bricks);
-    for (int i = 0; i < 30; i++)
+    int length = 30;
+    
+    for (int i = 0; i < length; i++)
     {
         window.draw(bricks[i].sprite);
-        //std::cout << "drawing brick" << std::endl;
     }
-    //drawBricks();
+}
+
+// Рисует и выводит один кадр
+void redrawFrame(sf::RenderWindow &window, Brick *bricks, sf::RectangleShape field)
+{
+    window.clear(sf::Color::White);
+    window.draw(field);
+    drawBricks(window, bricks);
     window.display();
 }
 
 Brick *createBricksArray_1level(sf::Vector2f startPosition, sf::Sprite brickSprite)
 {
-    const int NUMBER_OF_BRICKS = 30;
-    Brick *bricks = new Brick[NUMBER_OF_BRICKS];
+    //const int NUMBER_OF_BRICKS = 30;
+    Brick *bricks = new Brick[30];
     int k = 0;
     float xStart = startPosition.x;
     float yStart = startPosition.y;
@@ -63,14 +68,25 @@ Brick *createBricksArray_1level(sf::Vector2f startPosition, sf::Sprite brickSpri
     {
         for (int j = 0; j < 6; j++)
         {
-            bricks[k] = createBrick(brickSprite, (sf::Color(0xCF, 0xEF, 0x28)), {x : xStart, y : yStart});
+            bricks[k] = createBrick(brickSprite, (sf::Color(250, 107, 235)), {x : xStart, y : yStart});
             k++;
             xStart = xStart + 45;
         }
-        xStart = 0;
-        yStart = yStart + 30;
+        xStart = startPosition.x;
+        yStart = yStart + 25;
     }
     return bricks;
+}
+
+sf::RectangleShape createGameField(sf::Vector2f position, sf::Vector2f size)
+{
+    sf::RectangleShape gameField;
+    gameField.setSize(size);
+    gameField.setOutlineColor(sf::Color(76, 5, 73));
+    gameField.setOutlineThickness(5);
+    gameField.setPosition(position);
+    gameField.setFillColor(sf::Color(191, 250, 107));
+    return gameField;
 }
 
 int main()
@@ -83,41 +99,26 @@ int main()
         sf::VideoMode({WINDOW_WIDTH, WINDOW_HEIGHT}),
         "arkanoid game", sf::Style::Default, settings);
 
-    sf::Texture brickTexture;
-    brickTexture.loadFromFile("00/images/brick2.png");
-    sf::Sprite brickSprite;
-    brickSprite.setTexture(brickTexture);
-
-    //Brick bricks[NUMBER_OF_BRICKS];
-
     bool gameOver;
     bool gameWon;
     bool gameStarted;
     bool paused;
-    sf::Vector2f brickSize(40.0f, 25.0f);
-    // int k = 0;
-    // float xStart = 0;
-    // float yStart = 0;
-    // for (int i = 0; i < 5; i++)
-    // {
-    //     for (int j = 0; j < 6; j++)
-    //     {
-    //         bricks[k] = createBrick(brickSprite, (sf::Color(0xCF, 0xEF, 0x28)), {x : xStart, y : yStart});
-    //         k++;
-    //         xStart = xStart + 45;
-    //     }
-    //     xStart = 0;
-    //     yStart = yStart + 30;
-    // }
-    //sf::Vector2f pos(20, 40);
 
-    Brick *bricks = createBricksArray_1level({x : 20, y : 40}, brickSprite);
+    sf::Texture brickTexture;
+    brickTexture.loadFromFile("00/images/brick3.png");
+    sf::Sprite brickSprite;
+    brickSprite.setTexture(brickTexture);
+
+    Brick *bricks = createBricksArray_1level({x : 55, y : 60}, brickSprite);
+
+    sf::RectangleShape gameField = createGameField({x : 50, y : 50}, {x : 275, y : 300});
+
     while (window.isOpen())
     {
         pollEvents(window);
         // updatePointer(mousePosition, pointer);
         // updateCat(mousePosition, cat, clock);
-        redrawFrame(window, bricks);
+        redrawFrame(window, bricks, gameField);
     }
 }
 
