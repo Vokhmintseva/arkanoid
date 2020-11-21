@@ -1,0 +1,5 @@
+C:/OsnProjDe/arkanoid/CMakeFiles/edit_cache.dir
+C:/OsnProjDe/arkanoid/CMakeFiles/rebuild_cache.dir
+C:/OsnProjDe/arkanoid/00/CMakeFiles/edit_cache.dir
+C:/OsnProjDe/arkanoid/00/CMakeFiles/arkanoid.dir
+C:/OsnProjDe/arkanoid/00/CMakeFiles/rebuild_cache.dir

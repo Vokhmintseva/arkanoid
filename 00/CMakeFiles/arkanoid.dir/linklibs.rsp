@@ -1,0 +1,1 @@
+C:/CppDistro/MinGW/lib/libsfml-window-s-d.a C:/CppDistro/MinGW/lib/libsfml-graphics-s-d.a C:/CppDistro/MinGW/lib/libsfml-system-s-d.a C:/CppDistro/MinGW/lib/libfreetype.a C:/CppDistro/MinGW/lib/libjpeg.a -lopengl32 -lwinmm -lgdi32 -lwinmm -lgdi32 -lkernel32 -luser32 -lgdi32 -lwinspool -lshell32 -lole32 -loleaut32 -luuid -lcomdlg32 -ladvapi32 
