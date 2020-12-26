@@ -1,7 +1,12 @@
 #include <string>
 
-sf::Text getPlayerName(sf::RenderWindow &window)
+void getPlayerName(sf::RenderWindow &window, std::string &plName)
 {
+    if (plName != "")
+    {
+        gameState = start_game;
+        return;
+    }
     bool hover = false;
     const int maxNameLength = 18;
     std::string str;
@@ -64,8 +69,9 @@ sf::Text getPlayerName(sf::RenderWindow &window)
                 }
                 else if (event.key.code == 13) //enter
                 {
-                    gameState = play_game;
-                    return playerName;
+                    gameState = start_game;
+                    plName = playerName.getString();
+                    return;
                 }
                 else if (event.key.code < 128) //any other symbol
                 {
@@ -78,13 +84,15 @@ sf::Text getPlayerName(sf::RenderWindow &window)
                 break;
             case sf::Event::Closed:
                 gameState = quit;
-                return playerName;
+                plName = playerName.getString();
+                return;
             }
             (sf::IntRect(350, 450, 100, 50).contains(sf::Mouse::getPosition(window))) ? hover = true : hover = false;
             if (sf::Mouse::isButtonPressed(sf::Mouse::Left) && hover)
             {
-                gameState = play_game;
-                return playerName;
+                gameState = start_game;
+                plName = playerName.getString();
+                return;
             }
         }
         window.clear();
@@ -100,5 +108,4 @@ sf::Text getPlayerName(sf::RenderWindow &window)
         window.draw(playText);
         window.display();
     }
-    //return playerName;
 }

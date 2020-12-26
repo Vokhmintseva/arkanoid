@@ -659,6 +659,8 @@ vector
 -
 conio.h
 -
+string
+-
 store.cpp
 C:/OsnProjDe/arkanoid/00/store.cpp
 game.h

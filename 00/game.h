@@ -1,5 +1,3 @@
-
-
 struct Brick
 {
     sf::Sprite sprite;
@@ -21,8 +19,8 @@ const float PLATFORM_HEIGHT = 13;
 const float INITIAL_PLATFORM_X = LEFT_EDGE + (GAME_FIELD_WIDTH - PLATFORM_WIDTH) / 2;
 const float INITIAL_PLATFORM_Y = 325;
 const float BALL_SIZE = 10;
-const float INITIAL_BALL_X = LEFT_EDGE + (GAME_FIELD_WIDTH - BALL_SIZE) / 2;
-const float INITIAL_BALL_Y = INITIAL_PLATFORM_Y - BALL_SIZE;
+const float INITIAL_BALL_X = LEFT_EDGE + (GAME_FIELD_WIDTH - BALL_SIZE) / 2; //195
+const float INITIAL_BALL_Y = INITIAL_PLATFORM_Y - BALL_SIZE;                 //315
 const float gameFieldOutlineThickness = 5;
 
 sf::Texture platformTexture;
@@ -33,16 +31,21 @@ sf::Texture ballTexture;
 sf::Sprite ball;
 int ballXdir;
 int ballYdir;
-
-bool isPaused = true;
-//bool isGameFailed = false;
-bool isLevelFailed = false;
-int levelNum = 1;
-int lives = 3;
-//bool isGameWon = false;
-
-sf::Text text;
+int ballSpeed;
+bool isPaused;
+int lives;
 sf::Font font;
+sf::Text levelLostMsgText;
+sf::Text okText;
+sf::Text cancelText;
+std::string levelLostMsg = "YOU HAVE LOST THE LEVEL.\nWOULD YOU LIKE TO REPEAT ONE?";
+std::string ok = "OK";
+std::string cancel = "Cancel";
+sf::RectangleShape levelLostModal;
+int selectedModalItem = 1;
+
+using namespace std;
+
 //из полярных в евклидовы координаты
 sf::Vector2f toEuclidean(float radius, float angle)
 {
@@ -59,13 +62,11 @@ float toDegrees(float radians)
 
 void resetPlatform()
 {
-    //std::cout << "reset platform" << std::endl;
     platform.setPosition(INITIAL_PLATFORM_X, INITIAL_PLATFORM_Y);
 }
 
 void resetBall()
 {
-    std::cout << "INITIAL_BALL_Y" << INITIAL_BALL_Y << std::endl;
     ball.setPosition(INITIAL_BALL_X, INITIAL_BALL_Y);
 }
 
@@ -88,7 +89,6 @@ void handleCollisionWithBrick(sf::FloatRect brickBounds, sf::FloatRect ballBound
         (ballCenter <= (brickBounds.left + brickBounds.width)))
     {
         ballYdir = -1 * ballYdir;
-        //ballXdir = -1 * ballXdir;
     }
 }
 
@@ -110,31 +110,30 @@ void handleCollisionWithPlatform(sf::FloatRect platformBounds, sf::FloatRect bal
 
 void handleBallMiss()
 {
-    //std::cout << "handleBallMiss" << std::endl;
-    resetPlatform();
-    resetBall();
-    // sf::Vector2f ballPos = ball.getPosition();
-    // std::cout << "ballPos x in handle miss" << ballPos.x << std::endl;
-    // std::cout << "ballPos y in handle miss" << ballPos.y << std::endl;
-    //isPaused = true;
-    if (lives < 1)
+    lives--;
+    if (lives < 3)
     {
-        isLevelFailed = true;
-        lives = 3;
+        gameState = level_lost_modal;
     }
     else
-        lives--;
+    {
+        //gameState = ball_miss;
+        resetPlatform();
+        resetBall();
+        isPaused = true;
+        ballXdir = 1;
+        ballYdir = -1;
+    }
 }
 
 void updateBall(int &ballSpeed, float &dt, std::vector<Brick> &bricks)
 {
-    if (isPaused)
+    if (isPaused || gameState != playing)
         return;
     float angle = 45;
     const sf::Vector2f currentBallPos = ball.getPosition();
     const sf::FloatRect ballBounds = ball.getGlobalBounds();
     const sf::FloatRect platformBounds = platform.getGlobalBounds();
-
     for (int i = 0; i < bricks.size(); i++)
     {
         //const sf::FloatRect brickBounds = bricks[i].sprite.getGlobalBounds();
@@ -173,15 +172,15 @@ void updateBall(int &ballSpeed, float &dt, std::vector<Brick> &bricks)
     if (newGlobalCoords.y >= BOTTOM)
     {
         handleBallMiss();
+        return;
     }
-
     ball.setPosition(newGlobalCoords);
 }
 
 void updatePlatform(sf::Keyboard::Key &key, float &dt)
 {
-    if (isPaused || isLevelFailed)
-        return;
+    // if (isPaused || gameState == level_lost_modal)
+    //     return;
     const float speed = 1500;
     sf::Vector2f platformPosition = platform.getPosition();
     if (key == sf::Keyboard::Left)
@@ -198,33 +197,90 @@ void updatePlatform(sf::Keyboard::Key &key, float &dt)
     }
 }
 
-void onKeyPressed(sf::Event::KeyEvent &key, float &dt)
+void handleLeftKeyPressed(sf::Keyboard::Key &key, float &dt)
+{
+    if (gameState == playing && !isPaused)
+    {
+        updatePlatform(key, dt);
+    }
+    else
+    {
+        if (gameState == level_lost_modal)
+        {
+            selectedModalItem = 1;
+            okText.setStyle(sf::Text::Bold | sf::Text::Underlined);
+            cancelText.setStyle(sf::Text::Regular);
+        }
+    }
+}
+
+void handleRightKeyPressed(sf::Keyboard::Key &key, float &dt)
+{
+    if (gameState == playing && !isPaused)
+    {
+        updatePlatform(key, dt);
+    }
+    else
+    {
+        if (gameState == level_lost_modal)
+        {
+            selectedModalItem = 2;
+            okText.setStyle(sf::Text::Regular);
+            cancelText.setStyle(sf::Text::Bold | sf::Text::Underlined);
+        }
+    }
+}
+
+void handleReturnKeyPressed()
+{
+    if (gameState == level_lost_modal)
+    {
+        switch (selectedModalItem)
+        {
+        case 1:
+            gameState = start_game;
+            break;
+        case 2:
+            gameState = menu_screen;
+            break;
+        }
+    }
+}
+
+void onKeyReleased(sf::Event::KeyEvent &key, float &dt)
 {
     switch (key.code)
     {
     case sf::Keyboard::Space:
         isPaused = !isPaused;
         break;
+    case sf::Keyboard::Return:
+        handleReturnKeyPressed();
+        return;
+    default:
+        break;
+    }
+}
+
+void onKeyPressed(sf::Event::KeyEvent &key, float &dt)
+{
+    switch (key.code)
+    {
     case sf::Keyboard::Left:
-        updatePlatform(key.code, dt);
+        handleLeftKeyPressed(key.code, dt);
         break;
     case sf::Keyboard::Right:
-        updatePlatform(key.code, dt);
+        handleRightKeyPressed(key.code, dt);
         break;
-        // default:
-        //     updatePlatform(key.code, platformSprite);
-        //     break;
+    default:
+        break;
     }
-
-    // if (key.code == sf::Keyboard::Space)
-    // {
-    //     std::cout << "space was pressed" << std::endl;
-    // };
 }
 
 //опрашивает и обрабатывает доступные события в цикле
 void pollEvents(sf::RenderWindow &window, float &dt)
 {
+
     sf::Event event;
     while (window.pollEvent(event))
     {
@@ -233,11 +289,12 @@ void pollEvents(sf::RenderWindow &window, float &dt)
         case sf::Event::Closed:
             gameState = quit;
             return;
+        case sf::Event::KeyReleased:
+            onKeyReleased(event.key, dt);
+            break;
         case sf::Event::KeyPressed:
             onKeyPressed(event.key, dt);
             break;
-
-            //sf::Keyboard::isKeyPressed(sf::Keyboard::Space) : isGameStarted = true;
         default:
             break;
         }
@@ -255,32 +312,33 @@ void drawBricks(sf::RenderWindow &window, std::vector<Brick> &bricks)
     }
 }
 
+void drawLevelLostModal(sf::RenderWindow &window)
+{
+    window.draw(levelLostModal);
+    window.draw(levelLostMsgText);
+    window.draw(okText);
+    window.draw(cancelText);
+}
+
 // Рисует и выводит один кадр
 void redrawFrame(sf::RenderWindow &window, std::vector<Brick> bricks, sf::RectangleShape field)
 {
-    //sf::Vector2f platformPosition = platform.getPosition();
     window.clear(sf::Color::White);
     window.draw(field);
     drawBricks(window, bricks);
     window.draw(platform);
-    if (!isLevelFailed)
+    window.draw(ball);
+    if (gameState == level_lost_modal)
     {
-        // sf::Vector2f ballPos = ball.getPosition();
-        // std::cout << "ballPos x in redraw" << ballPos.x << std::endl;
-        // std::cout << "ballPos y in redraw" << ballPos.y << std::endl;
-        window.draw(ball);
+        drawLevelLostModal(window);
     }
-    else
-    {
-        text.setString("LEVEL FAILED");
-        window.draw(text);
-    }
-
     window.display();
 }
 
 std::vector<Brick> createBricksVector_1level(sf::Vector2f startPosition)
 {
+    brickTexture.loadFromFile("00/images/brick.png");
+    brick.setTexture(brickTexture);
     std::vector<Brick> bricks;
     int k = 0;
     float xStart = startPosition.x;
@@ -310,18 +368,17 @@ sf::RectangleShape createGameField()
     return gameField;
 }
 
-void playGame(sf::RenderWindow &window, sf::Text playerName)
+void setTimeToShowFailMsg(float &dt, float &timeToShowFailMsg)
 {
-    font.loadFromFile("00/arial.ttf");
-    text.setPosition({x : (LEFT_EDGE + GAME_FIELD_WIDTH) / 4, y : (TOP + GAME_FIELD_HEIGHT) / 2});
-    text.setFont(font);
-    text.setFillColor(sf::Color::Red);
-    text.setStyle(sf::Text::Bold);
+    timeToShowFailMsg = timeToShowFailMsg + dt;
+    if (timeToShowFailMsg > 3)
+    {
+        gameState = level_lost;
+    }
+}
 
-    brickTexture.loadFromFile("00/images/brick.png");
-    brick.setTexture(brickTexture);
-    std::vector<Brick> bricks = createBricksVector_1level({x : 65, y : 60});
-
+void adjustPlatform()
+{
     platformTexture.loadFromFile("00/images/platform.png");
     platform.setTexture(platformTexture);
     sf::Vector2f platformSize(PLATFORM_WIDTH, PLATFORM_HEIGHT);
@@ -329,30 +386,87 @@ void playGame(sf::RenderWindow &window, sf::Text playerName)
         platformSize.x / platform.getLocalBounds().width,
         platformSize.y / platform.getLocalBounds().height);
     resetPlatform();
+}
 
+void adjustBall()
+{
     ballTexture.loadFromFile("00/images/ball.png");
     ball.setTexture(ballTexture);
     ball.setScale(
         BALL_SIZE / ball.getLocalBounds().width,
         BALL_SIZE / ball.getLocalBounds().height);
-    resetBall();
-    sf::Vector2f ballPosition = {INITIAL_BALL_X, INITIAL_BALL_X};
-
-    sf::RectangleShape gameField = createGameField();
-
-    sf::Clock clock;
-
     ballXdir = 1;
     ballYdir = -1;
-    int ballSpeed = 100;
+    ballSpeed = 100;
+    resetBall();
+}
 
+void adjustGameLostModal()
+{
+    font.loadFromFile("00/arial.ttf");
+    levelLostModal.setSize(sf::Vector2f(WINDOW_WIDTH, WINDOW_HEIGHT));
+    levelLostModal.setPosition(0, 0);
+    levelLostModal.setFillColor(sf::Color(0, 0, 0, 200));
+
+    levelLostMsgText = sf::Text();
+    levelLostMsgText.setFillColor(sf::Color::Red);
+    levelLostMsgText.setStyle(sf::Text::Bold);
+    levelLostMsgText.setCharacterSize(25);
+    levelLostMsgText.setString(levelLostMsg);
+    levelLostMsgText.setPosition({x : WINDOW_WIDTH / 4, y : WINDOW_HEIGHT / 3});
+
+    okText = sf::Text();
+    okText.setFillColor(sf::Color::Red);
+    okText.setStyle(sf::Text::Bold | sf::Text::Underlined);
+    okText.setCharacterSize(25);
+    okText.setString(ok);
+    okText.setPosition({x : WINDOW_WIDTH * 1 / 3, y : WINDOW_HEIGHT / 2});
+
+    cancelText = sf::Text();
+    cancelText.setFillColor(sf::Color::Red);
+    cancelText.setStyle(sf::Text::Regular);
+    cancelText.setCharacterSize(25);
+    cancelText.setString(cancel);
+    cancelText.setPosition({x : WINDOW_WIDTH * 2 / 3, y : WINDOW_HEIGHT / 2});
+
+    levelLostMsgText.setFont(font);
+    okText.setFont(font);
+    cancelText.setFont(font);
+}
+
+void resetGlobalVars()
+{
+    isPaused = true;
+    int lives = 3;
+    int selectedModalItem = 1;
+    gameState = playing;
+}
+
+void playGame(sf::RenderWindow &window, std::string playerName)
+{
+    adjustPlatform();
+    adjustBall();
+    adjustGameLostModal();
+
+    resetGlobalVars();
+    std::vector<Brick> bricks = createBricksVector_1level({x : 65, y : 60});
+    sf::RectangleShape gameField = createGameField();
+    sf::Clock clock;
     while (window.isOpen())
     {
         float dt = clock.restart().asSeconds();
         pollEvents(window, dt);
-        if (gameState == quit)
-            return;
         updateBall(ballSpeed, dt, bricks);
         redrawFrame(window, bricks, gameField);
+
+        if (
+            gameState == quit ||
+            gameState == menu_screen ||
+            gameState == start_game)
+        {
+            return;
+        }
     }
 }
+
+//sf::Keyboard::isKeyPressed(sf::Keyboard::Space) : isGameStarted = true;

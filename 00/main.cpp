@@ -4,14 +4,12 @@
 #include <SFML/Window.hpp>
 #include <vector>
 #include <conio.h>
+#include <string>
 #include "store.cpp"
 #include "game.h"
 #include "splashScreen.h"
 #include "menu.h"
 #include "inputName.h"
-
-// void splashSreen(sf::RenderWindow &window);
-// int menu(sf::RenderWindow &window);
 
 int main()
 {
@@ -20,8 +18,8 @@ int main()
     sf::RenderWindow window(
         sf::VideoMode({WINDOW_WIDTH, WINDOW_HEIGHT}),
         "arkanoid game", sf::Style::Default, settings);
-    sf::Text playerName;
-    splashSreen(window);
+    std::string playerName = "";
+    //splashSreen(window);
     bool game = true;
     while (game)
     {
@@ -31,9 +29,9 @@ int main()
             menu(window);
             break;
         case input_name:
-            playerName = getPlayerName(window);
+            getPlayerName(window, playerName);
             break;
-        case play_game:
+        case start_game:
             playGame(window, playerName);
             break;
         case quit:

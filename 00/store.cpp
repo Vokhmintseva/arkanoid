@@ -2,10 +2,10 @@ enum states
 {
     menu_screen,
     input_name,
-    play_game,
-    repeat_level,
-    victory,
-    fail,
+    start_game,
+    playing,
+    level_lost,
+    level_lost_modal,
     quit
 };
 

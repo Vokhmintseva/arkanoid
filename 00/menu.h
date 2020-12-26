@@ -1,5 +1,3 @@
-
-
 const int menuItemsNumber = 3;
 int selectedItem = 0;
 
@@ -18,35 +16,35 @@ void returnPressedHandle()
     }
 }
 
-void moveUp(sf::Text text[])
+void moveUp(sf::Text menuItems[])
 {
     if (selectedItem - 1 >= 0)
     {
-        text[selectedItem].setFillColor(sf::Color::White);
-        text[selectedItem].setStyle(sf::Text::Regular);
+        menuItems[selectedItem].setFillColor(sf::Color::White);
+        menuItems[selectedItem].setStyle(sf::Text::Regular);
         selectedItem--;
-        text[selectedItem].setFillColor(sf::Color::Red);
-        text[selectedItem].setStyle(sf::Text::Bold | sf::Text::Underlined);
+        menuItems[selectedItem].setFillColor(sf::Color::Red);
+        menuItems[selectedItem].setStyle(sf::Text::Bold | sf::Text::Underlined);
     }
 }
 
-void moveDown(sf::Text text[])
+void moveDown(sf::Text menuItems[])
 {
     if (selectedItem + 1 < menuItemsNumber)
     {
-        text[selectedItem].setFillColor(sf::Color::White);
-        text[selectedItem].setStyle(sf::Text::Regular);
+        menuItems[selectedItem].setFillColor(sf::Color::White);
+        menuItems[selectedItem].setStyle(sf::Text::Regular);
         selectedItem++;
-        text[selectedItem].setFillColor(sf::Color::Red);
-        text[selectedItem].setStyle(sf::Text::Bold | sf::Text::Underlined);
+        menuItems[selectedItem].setFillColor(sf::Color::Red);
+        menuItems[selectedItem].setStyle(sf::Text::Bold | sf::Text::Underlined);
     }
 }
 
-void drawMenuItems(sf::RenderWindow &window, sf::Text text[])
+void drawMenuItems(sf::RenderWindow &window, sf::Text menuItems[])
 {
     for (int i = 0; i < menuItemsNumber; i++)
     {
-        window.draw(text[i]);
+        window.draw(menuItems[i]);
     }
 }
 
@@ -56,18 +54,18 @@ void menu(sf::RenderWindow &window)
     const float windowHeight = window.getSize().y;
     sf::Font font;
     font.loadFromFile("00/arial.ttf");
-    sf::Text text[menuItemsNumber];
-    std::string menuItems[menuItemsNumber] = {"Play", "HighScores", "Exit"};
+    sf::Text menuItems[menuItemsNumber];
+    std::string menuItemsStrings[menuItemsNumber] = {"Play", "HighScores", "Exit"};
 
     for (int i = 0; i < menuItemsNumber; i++)
     {
-        text[i].setFillColor(sf::Color::White);
-        text[i].setFont(font);
-        text[i].setString(menuItems[i]);
-        text[i].setPosition({x : windowWidth / 3, y : windowHeight / (menuItemsNumber + 1) * (i + 1)});
+        menuItems[i].setFillColor(sf::Color::White);
+        menuItems[i].setFont(font);
+        menuItems[i].setString(menuItemsStrings[i]);
+        menuItems[i].setPosition({x : windowWidth / 3, y : windowHeight / (menuItemsNumber + 1) * (i + 1)});
     }
-    text[0].setFillColor(sf::Color::Red);
-    text[0].setStyle(sf::Text::Bold | sf::Text::Underlined);
+    menuItems[0].setFillColor(sf::Color::Red);
+    menuItems[0].setStyle(sf::Text::Bold | sf::Text::Underlined);
 
     while (window.isOpen())
     {
@@ -80,11 +78,11 @@ void menu(sf::RenderWindow &window)
                 switch (event.key.code)
                 {
                 case sf::Keyboard::Up:
-                    moveUp(text);
+                    moveUp(menuItems);
                     break;
 
                 case sf::Keyboard::Down:
-                    moveDown(text);
+                    moveDown(menuItems);
                     break;
 
                 case sf::Keyboard::Return:
@@ -98,7 +96,7 @@ void menu(sf::RenderWindow &window)
             }
         }
         window.clear();
-        drawMenuItems(window, text);
+        drawMenuItems(window, menuItems);
         window.display();
     }
 }

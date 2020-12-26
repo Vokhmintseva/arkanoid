@@ -12,7 +12,7 @@ void splashSreen(sf::RenderWindow &window)
     while (window.isOpen())
     {
         const float time = clock.getElapsedTime().asSeconds();
-        if (time > 2)
+        if (time > 1)
         {
             return;
         }
