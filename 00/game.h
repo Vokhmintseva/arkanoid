@@ -23,18 +23,18 @@ const float INITIAL_BALL_X = LEFT_EDGE + (GAME_FIELD_WIDTH - BALL_SIZE) / 2; //1
 const float INITIAL_BALL_Y = INITIAL_PLATFORM_Y - BALL_SIZE;                 //315
 const float gameFieldOutlineThickness = 5;
 
-sf::Texture platformTexture;
 sf::Sprite platform;
-sf::Texture brickTexture;
 sf::Sprite brick;
-sf::Texture ballTexture;
 sf::Sprite ball;
+sf::Sprite best_score;
+sf::Sprite player;
+sf::Sprite background;
 int ballXdir;
 int ballYdir;
 int ballSpeed;
 bool isPaused;
 int lives;
-sf::Font font;
+int scores = 0;
 sf::Text levelLostMsgText;
 sf::Text okText;
 sf::Text cancelText;
@@ -179,8 +179,6 @@ void updateBall(int &ballSpeed, float &dt, std::vector<Brick> &bricks)
 
 void updatePlatform(sf::Keyboard::Key &key, float &dt)
 {
-    // if (isPaused || gameState == level_lost_modal)
-    //     return;
     const float speed = 1500;
     sf::Vector2f platformPosition = platform.getPosition();
     if (key == sf::Keyboard::Left)
@@ -324,8 +322,10 @@ void drawLevelLostModal(sf::RenderWindow &window)
 void redrawFrame(sf::RenderWindow &window, std::vector<Brick> bricks, sf::RectangleShape field)
 {
     window.clear(sf::Color::White);
+    window.draw(background);
     window.draw(field);
     drawBricks(window, bricks);
+    drawSidebar(window, player);
     window.draw(platform);
     window.draw(ball);
     if (gameState == level_lost_modal)
@@ -337,8 +337,7 @@ void redrawFrame(sf::RenderWindow &window, std::vector<Brick> bricks, sf::Rectan
 
 std::vector<Brick> createBricksVector_1level(sf::Vector2f startPosition)
 {
-    brickTexture.loadFromFile("00/images/brick.png");
-    brick.setTexture(brickTexture);
+    brick.setTexture(getBrickTexture());
     std::vector<Brick> bricks;
     int k = 0;
     float xStart = startPosition.x;
@@ -364,7 +363,7 @@ sf::RectangleShape createGameField()
     gameField.setOutlineColor(sf::Color(76, 5, 73));
     gameField.setOutlineThickness(gameFieldOutlineThickness);
     gameField.setPosition(gameFieldPosition);
-    gameField.setFillColor(sf::Color(191, 250, 107));
+    gameField.setFillColor(sf::Color(50, 25, 100, 180));
     return gameField;
 }
 
@@ -379,8 +378,7 @@ void setTimeToShowFailMsg(float &dt, float &timeToShowFailMsg)
 
 void adjustPlatform()
 {
-    platformTexture.loadFromFile("00/images/platform.png");
-    platform.setTexture(platformTexture);
+    platform.setTexture(getPlatformTexture());
     sf::Vector2f platformSize(PLATFORM_WIDTH, PLATFORM_HEIGHT);
     platform.setScale(
         platformSize.x / platform.getLocalBounds().width,
@@ -390,8 +388,7 @@ void adjustPlatform()
 
 void adjustBall()
 {
-    ballTexture.loadFromFile("00/images/ball.png");
-    ball.setTexture(ballTexture);
+    ball.setTexture(getBallTexture());
     ball.setScale(
         BALL_SIZE / ball.getLocalBounds().width,
         BALL_SIZE / ball.getLocalBounds().height);
@@ -403,7 +400,7 @@ void adjustBall()
 
 void adjustGameLostModal()
 {
-    font.loadFromFile("00/arial.ttf");
+    //font.loadFromFile("00/arial.ttf");
     levelLostModal.setSize(sf::Vector2f(WINDOW_WIDTH, WINDOW_HEIGHT));
     levelLostModal.setPosition(0, 0);
     levelLostModal.setFillColor(sf::Color(0, 0, 0, 200));
@@ -429,9 +426,9 @@ void adjustGameLostModal()
     cancelText.setString(cancel);
     cancelText.setPosition({x : WINDOW_WIDTH * 2 / 3, y : WINDOW_HEIGHT / 2});
 
-    levelLostMsgText.setFont(font);
-    okText.setFont(font);
-    cancelText.setFont(font);
+    levelLostMsgText.setFont(getFont());
+    okText.setFont(getFont());
+    cancelText.setFont(getFont());
 }
 
 void resetGlobalVars()
@@ -447,7 +444,7 @@ void playGame(sf::RenderWindow &window, std::string playerName)
     adjustPlatform();
     adjustBall();
     adjustGameLostModal();
-
+    background.setTexture(getBackgroundTexture());
     resetGlobalVars();
     std::vector<Brick> bricks = createBricksVector_1level({x : 65, y : 60});
     sf::RectangleShape gameField = createGameField();

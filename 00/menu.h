@@ -50,17 +50,17 @@ void drawMenuItems(sf::RenderWindow &window, sf::Text menuItems[])
 
 void menu(sf::RenderWindow &window)
 {
-    const float windowWidth = window.getSize().x;
-    const float windowHeight = window.getSize().y;
-    sf::Font font;
-    font.loadFromFile("00/arial.ttf");
+    // const float windowWidth = window.getSize().x;
+    // const float windowHeight = window.getSize().y;
+    const float windowWidth = 800;
+    const float windowHeight = 600;
     sf::Text menuItems[menuItemsNumber];
     std::string menuItemsStrings[menuItemsNumber] = {"Play", "HighScores", "Exit"};
 
     for (int i = 0; i < menuItemsNumber; i++)
     {
         menuItems[i].setFillColor(sf::Color::White);
-        menuItems[i].setFont(font);
+        menuItems[i].setFont(getFont());
         menuItems[i].setString(menuItemsStrings[i]);
         menuItems[i].setPosition({x : windowWidth / 3, y : windowHeight / (menuItemsNumber + 1) * (i + 1)});
     }

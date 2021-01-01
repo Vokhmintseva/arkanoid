@@ -10,18 +10,16 @@ void getPlayerName(sf::RenderWindow &window, std::string &plName)
     bool hover = false;
     const int maxNameLength = 18;
     std::string str;
-    sf::Font font;
-    font.loadFromFile("00/arial.ttf");
 
     sf::Text label;
     label.setPosition({x : 300, y : 200});
-    label.setFont(font);
+    label.setFont(getFont());
     label.setFillColor(sf::Color::White);
     label.setString("Enter your name");
 
     sf::Text playerName;
     playerName.setPosition({x : 265, y : 315});
-    playerName.setFont(font);
+    playerName.setFont(getFont());
     playerName.setFillColor(sf::Color::Yellow);
     playerName.setString("");
 
@@ -47,7 +45,7 @@ void getPlayerName(sf::RenderWindow &window, std::string &plName)
 
     sf::Text playText;
     playText.setPosition({x : 355, y : 455});
-    playText.setFont(font);
+    playText.setFont(getFont());
     playText.setFillColor(sf::Color::Red);
     playText.setString("PLAY!");
 

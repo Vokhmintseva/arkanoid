@@ -5,7 +5,9 @@
 #include <vector>
 #include <conio.h>
 #include <string>
+#include "assets.cpp"
 #include "store.cpp"
+#include "sidebar.cpp"
 #include "game.h"
 #include "splashScreen.h"
 #include "menu.h"
@@ -13,6 +15,7 @@
 
 int main()
 {
+    loadAssets();
     sf::ContextSettings settings;
     settings.antialiasingLevel = 8;
     sf::RenderWindow window(

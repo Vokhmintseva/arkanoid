@@ -73,9 +73,11 @@
  C:/CppDistro/MinGW/include/SFML/Window/Window.hpp
  C:/CppDistro/MinGW/include/SFML/Window/WindowHandle.hpp
  C:/CppDistro/MinGW/include/SFML/Window/WindowStyle.hpp
+ C:/OsnProjDe/arkanoid/00/assets.cpp
  C:/OsnProjDe/arkanoid/00/game.h
  C:/OsnProjDe/arkanoid/00/inputName.h
  C:/OsnProjDe/arkanoid/00/main.cpp
  C:/OsnProjDe/arkanoid/00/menu.h
+ C:/OsnProjDe/arkanoid/00/sidebar.cpp
  C:/OsnProjDe/arkanoid/00/splashScreen.h
  C:/OsnProjDe/arkanoid/00/store.cpp

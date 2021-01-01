@@ -640,6 +640,8 @@ SFML/Config.hpp
 
 C:/CppDistro/MinGW/include/SFML/Window/WindowStyle.hpp
 
+C:/OsnProjDe/arkanoid/00/assets.cpp
+
 C:/OsnProjDe/arkanoid/00/game.h
 
 C:/OsnProjDe/arkanoid/00/inputName.h
@@ -661,8 +663,12 @@ conio.h
 -
 string
 -
+assets.cpp
+C:/OsnProjDe/arkanoid/00/assets.cpp
 store.cpp
 C:/OsnProjDe/arkanoid/00/store.cpp
+sidebar.cpp
+C:/OsnProjDe/arkanoid/00/sidebar.cpp
 game.h
 C:/OsnProjDe/arkanoid/00/game.h
 splashScreen.h
@@ -673,6 +679,8 @@ inputName.h
 C:/OsnProjDe/arkanoid/00/inputName.h
 
 C:/OsnProjDe/arkanoid/00/menu.h
+
+C:/OsnProjDe/arkanoid/00/sidebar.cpp
 
 C:/OsnProjDe/arkanoid/00/splashScreen.h
 
