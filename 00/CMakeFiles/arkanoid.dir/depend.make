@@ -74,10 +74,10 @@
 00/CMakeFiles/arkanoid.dir/main.cpp.obj: C:/CppDistro/MinGW/include/SFML/Window/WindowStyle.hpp
 00/CMakeFiles/arkanoid.dir/main.cpp.obj: 00/assets.cpp
 00/CMakeFiles/arkanoid.dir/main.cpp.obj: 00/game.h
+00/CMakeFiles/arkanoid.dir/main.cpp.obj: 00/globalVars.cpp
 00/CMakeFiles/arkanoid.dir/main.cpp.obj: 00/inputName.h
 00/CMakeFiles/arkanoid.dir/main.cpp.obj: 00/main.cpp
 00/CMakeFiles/arkanoid.dir/main.cpp.obj: 00/menu.h
-00/CMakeFiles/arkanoid.dir/main.cpp.obj: 00/sidebar.cpp
 00/CMakeFiles/arkanoid.dir/main.cpp.obj: 00/splashScreen.h
 00/CMakeFiles/arkanoid.dir/main.cpp.obj: 00/store.cpp
 

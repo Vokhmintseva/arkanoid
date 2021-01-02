@@ -1,5 +1,6 @@
 #include <SFML/Graphics.hpp>
 #include <cmath>
+#include <fstream>
 #include <iostream>
 #include <SFML/Window.hpp>
 #include <vector>
@@ -7,7 +8,7 @@
 #include <string>
 #include "assets.cpp"
 #include "store.cpp"
-#include "sidebar.cpp"
+#include "globalVars.cpp"
 #include "game.h"
 #include "splashScreen.h"
 #include "menu.h"
@@ -21,7 +22,7 @@ int main()
     sf::RenderWindow window(
         sf::VideoMode({WINDOW_WIDTH, WINDOW_HEIGHT}),
         "arkanoid game", sf::Style::Default, settings);
-    std::string playerName = "";
+
     //splashSreen(window);
     bool game = true;
     while (game)
@@ -32,10 +33,10 @@ int main()
             menu(window);
             break;
         case input_name:
-            getPlayerName(window, playerName);
+            getPlayerName(window);
             break;
         case start_game:
-            playGame(window, playerName);
+            playGame(window);
             break;
         case quit:
             game = !game;

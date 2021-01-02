@@ -644,6 +644,8 @@ C:/OsnProjDe/arkanoid/00/assets.cpp
 
 C:/OsnProjDe/arkanoid/00/game.h
 
+C:/OsnProjDe/arkanoid/00/globalVars.cpp
+
 C:/OsnProjDe/arkanoid/00/inputName.h
 string
 -
@@ -652,6 +654,8 @@ C:/OsnProjDe/arkanoid/00/main.cpp
 SFML/Graphics.hpp
 -
 cmath
+-
+fstream
 -
 iostream
 -
@@ -667,8 +671,8 @@ assets.cpp
 C:/OsnProjDe/arkanoid/00/assets.cpp
 store.cpp
 C:/OsnProjDe/arkanoid/00/store.cpp
-sidebar.cpp
-C:/OsnProjDe/arkanoid/00/sidebar.cpp
+globalVars.cpp
+C:/OsnProjDe/arkanoid/00/globalVars.cpp
 game.h
 C:/OsnProjDe/arkanoid/00/game.h
 splashScreen.h
@@ -679,8 +683,6 @@ inputName.h
 C:/OsnProjDe/arkanoid/00/inputName.h
 
 C:/OsnProjDe/arkanoid/00/menu.h
-
-C:/OsnProjDe/arkanoid/00/sidebar.cpp
 
 C:/OsnProjDe/arkanoid/00/splashScreen.h
 

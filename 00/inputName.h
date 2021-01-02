@@ -1,8 +1,9 @@
 #include <string>
 
-void getPlayerName(sf::RenderWindow &window, std::string &plName)
+void getPlayerName(sf::RenderWindow &window)
 {
-    if (plName != "")
+
+    if (!playerName.empty())
     {
         gameState = start_game;
         return;
@@ -17,11 +18,11 @@ void getPlayerName(sf::RenderWindow &window, std::string &plName)
     label.setFillColor(sf::Color::White);
     label.setString("Enter your name");
 
-    sf::Text playerName;
-    playerName.setPosition({x : 265, y : 315});
-    playerName.setFont(getFont());
-    playerName.setFillColor(sf::Color::Yellow);
-    playerName.setString("");
+    sf::Text plName;
+    plName.setPosition({x : 265, y : 315});
+    plName.setFont(getFont());
+    plName.setFillColor(sf::Color::Yellow);
+    plName.setString("");
 
     sf::RectangleShape inputFieldBorder;
     inputFieldBorder.setSize(sf::Vector2f(330, 70));
@@ -63,33 +64,33 @@ void getPlayerName(sf::RenderWindow &window, std::string &plName)
                     {
                         str.resize(str.size() - 1);
                     }
-                    playerName.setString(str);
+                    plName.setString(str);
                 }
-                else if (event.key.code == 13) //enter
+                else if (event.key.code == 13 && !plName.getString().isEmpty()) //enter
                 {
                     gameState = start_game;
-                    plName = playerName.getString();
+                    playerName = plName.getString();
                     return;
                 }
-                else if (event.key.code < 128) //any other symbol
+                else if (event.key.code < 128 && event.key.code != 13) //any other symbol
                 {
                     if (str.size() < maxNameLength)
                     {
                         str += static_cast<char>(event.text.unicode);
                     }
-                    playerName.setString(str);
+                    plName.setString(str);
                 }
                 break;
             case sf::Event::Closed:
                 gameState = quit;
-                plName = playerName.getString();
+                playerName = plName.getString();
                 return;
             }
             (sf::IntRect(350, 450, 100, 50).contains(sf::Mouse::getPosition(window))) ? hover = true : hover = false;
-            if (sf::Mouse::isButtonPressed(sf::Mouse::Left) && hover)
+            if (sf::Mouse::isButtonPressed(sf::Mouse::Left) && hover && !plName.getString().isEmpty())
             {
                 gameState = start_game;
-                plName = playerName.getString();
+                playerName = plName.getString();
                 return;
             }
         }
@@ -97,7 +98,7 @@ void getPlayerName(sf::RenderWindow &window, std::string &plName)
         window.draw(label);
         window.draw(inputFieldBorder);
         window.draw(inputField);
-        window.draw(playerName);
+        window.draw(plName);
         if (hover)
         {
             window.draw(playButtonBorder);

@@ -5,9 +5,7 @@ struct Brick
     bool isDestroyed;
 };
 
-constexpr unsigned WINDOW_WIDTH = 800;
-constexpr unsigned WINDOW_HEIGHT = 600;
-const sf::Vector2f gameFieldPosition = {x : 50, y : 50};
+const sf::Vector2f gameFieldPosition = sf::Vector2f(50, 50);
 const float GAME_FIELD_WIDTH = 300;
 const float GAME_FIELD_HEIGHT = 300;
 const float LEFT_EDGE = gameFieldPosition.x;
@@ -24,20 +22,24 @@ const float INITIAL_BALL_Y = INITIAL_PLATFORM_Y - BALL_SIZE;                 //3
 const float gameFieldOutlineThickness = 5;
 
 sf::Sprite platform;
+sf::Sprite livesDesignation;
 sf::Sprite brick;
 sf::Sprite ball;
 sf::Sprite best_score;
 sf::Sprite player;
 sf::Sprite background;
+sf::Sprite scoresTable;
 int ballXdir;
 int ballYdir;
 int ballSpeed;
 bool isPaused;
 int lives;
-int scores = 0;
+int scores;
 sf::Text levelLostMsgText;
 sf::Text okText;
 sf::Text cancelText;
+sf::Text playerText;
+sf::Text scoresText;
 std::string levelLostMsg = "YOU HAVE LOST THE LEVEL.\nWOULD YOU LIKE TO REPEAT ONE?";
 std::string ok = "OK";
 std::string cancel = "Cancel";
@@ -83,12 +85,20 @@ Brick createBrick(sf::Color color, sf::Vector2f position)
 
 void handleCollisionWithBrick(sf::FloatRect brickBounds, sf::FloatRect ballBounds)
 {
+    scores = scores + 50;
+    scoresText.setString(std::to_string(scores));
     const float ballCenter = ballBounds.left + BALL_SIZE / 2;
     if (
         (brickBounds.left <= ballCenter) &&
         (ballCenter <= (brickBounds.left + brickBounds.width)))
     {
         ballYdir = -1 * ballYdir;
+    }
+    else if (
+        (brickBounds.left > ballCenter) ||
+        (ballCenter > (brickBounds.left + brickBounds.width)))
+    {
+        ballXdir = -1 * ballXdir;
     }
 }
 
@@ -111,13 +121,12 @@ void handleCollisionWithPlatform(sf::FloatRect platformBounds, sf::FloatRect bal
 void handleBallMiss()
 {
     lives--;
-    if (lives < 3)
+    if (lives < 1)
     {
         gameState = level_lost_modal;
     }
     else
     {
-        //gameState = ball_miss;
         resetPlatform();
         resetBall();
         isPaused = true;
@@ -318,6 +327,22 @@ void drawLevelLostModal(sf::RenderWindow &window)
     window.draw(cancelText);
 }
 
+void drawSidebar(sf::RenderWindow &window)
+{
+    window.draw(playerText);
+    window.draw(player);
+    window.draw(scoresText);
+    window.draw(scoresTable);
+    sf::Vector2f initPos = {x : 370, y : 250};
+    //cout << lives << endl;
+    for (int i = 0; i < lives; i++)
+    {
+        livesDesignation.setPosition(initPos);
+        window.draw(livesDesignation);
+        initPos.y = initPos.y + 20;
+    }
+}
+
 // Рисует и выводит один кадр
 void redrawFrame(sf::RenderWindow &window, std::vector<Brick> bricks, sf::RectangleShape field)
 {
@@ -325,7 +350,7 @@ void redrawFrame(sf::RenderWindow &window, std::vector<Brick> bricks, sf::Rectan
     window.draw(background);
     window.draw(field);
     drawBricks(window, bricks);
-    drawSidebar(window, player);
+    drawSidebar(window);
     window.draw(platform);
     window.draw(ball);
     if (gameState == level_lost_modal)
@@ -398,9 +423,38 @@ void adjustBall()
     resetBall();
 }
 
+void adjustSidebar()
+{
+    playerText = sf::Text();
+    playerText.setFillColor(sf::Color::Yellow);
+    playerText.setFont(getFont());
+    playerText.setCharacterSize(20);
+    playerText.setString(playerName);
+    playerText.setPosition({x : 440, y : 80});
+
+    player.setTexture(getPlayerTexture());
+    player.setPosition(370, 50);
+
+    scoresTable.setTexture(getScoresTexture());
+    scoresTable.setPosition(370, 150);
+
+    scoresText = sf::Text();
+    scoresText.setFillColor(sf::Color::Red);
+    scoresText.setFont(getFont());
+    scoresText.setCharacterSize(30);
+    scoresText.setString(std::to_string(scores));
+    scoresText.setPosition({x : 450, y : 162});
+
+    livesDesignation.setTexture(getPlatformTexture());
+    sf::Vector2f livesDesignationSize(30, 10);
+    livesDesignation.setScale(
+        livesDesignationSize.x / livesDesignation.getLocalBounds().width,
+        livesDesignationSize.y / livesDesignation.getLocalBounds().height);
+    livesDesignation.setRotation(-20);
+}
+
 void adjustGameLostModal()
 {
-    //font.loadFromFile("00/arial.ttf");
     levelLostModal.setSize(sf::Vector2f(WINDOW_WIDTH, WINDOW_HEIGHT));
     levelLostModal.setPosition(0, 0);
     levelLostModal.setFillColor(sf::Color(0, 0, 0, 200));
@@ -434,18 +488,42 @@ void adjustGameLostModal()
 void resetGlobalVars()
 {
     isPaused = true;
-    int lives = 3;
+    lives = 3;
     int selectedModalItem = 1;
     gameState = playing;
+    scores = 0;
 }
 
-void playGame(sf::RenderWindow &window, std::string playerName)
+void handleScores()
 {
+    std::ifstream file("HighScores.txt"); // окрываем файл для чтения
+    if (file.is_open())
+    {
+        std::string line;
+        while (getline(file, line))
+        {
+            std::cout << line << std::endl;
+        }
+    }
+    file.close();
+
+    std::ofstream file2;          // поток для записи
+    file2.open("HighScores.txt"); // окрываем файл для записи
+    if (file2.is_open())
+    {
+        file2 << playerName << " " << scores << std::endl;
+    }
+    file2.close();
+}
+
+void playGame(sf::RenderWindow &window)
+{
+    resetGlobalVars();
     adjustPlatform();
     adjustBall();
     adjustGameLostModal();
     background.setTexture(getBackgroundTexture());
-    resetGlobalVars();
+    adjustSidebar();
     std::vector<Brick> bricks = createBricksVector_1level({x : 65, y : 60});
     sf::RectangleShape gameField = createGameField();
     sf::Clock clock;
@@ -461,6 +539,7 @@ void playGame(sf::RenderWindow &window, std::string playerName)
             gameState == menu_screen ||
             gameState == start_game)
         {
+            handleScores();
             return;
         }
     }
