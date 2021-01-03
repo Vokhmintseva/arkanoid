@@ -3,7 +3,7 @@ sf::Texture brickTexture;
 sf::Texture ballTexture;
 sf::Texture playerTexture;
 sf::Texture scoresTexture;
-sf::Texture bestScoresTexture;
+sf::Texture highScoresTexture;
 sf::Texture backgroundTexture;
 sf::Texture backgroundMenuTexture;
 sf::Font font;
@@ -15,7 +15,7 @@ void loadAssets()
     brickTexture.loadFromFile("00/images/brick.png");
     playerTexture.loadFromFile("00/images/player.png");
     scoresTexture.loadFromFile("00/images/score.png");
-    bestScoresTexture.loadFromFile("00/images/best-score.png");
+    highScoresTexture.loadFromFile("00/images/high-score.png");
     backgroundTexture.loadFromFile("00/images/background.png");
     backgroundMenuTexture.loadFromFile("00/images/backgrMenu.png");
     font.loadFromFile("00/perfectDOSVGA437.ttf");
@@ -51,9 +51,9 @@ sf::Texture &getScoresTexture()
     return scoresTexture;
 }
 
-sf::Texture &getBestScoresTexture()
+sf::Texture &getHighScoresTexture()
 {
-    return bestScoresTexture;
+    return highScoresTexture;
 }
 
 sf::Texture &getBackgroundTexture()

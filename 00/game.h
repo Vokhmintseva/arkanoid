@@ -1,3 +1,5 @@
+#include <regex>
+
 struct Brick
 {
     sf::Sprite sprite;
@@ -31,28 +33,25 @@ sf::Sprite platform;
 sf::Sprite livesDesignation;
 sf::Sprite brick;
 sf::Sprite ball;
-sf::Sprite best_score;
+sf::Sprite highScoresSprite;
 sf::Sprite player;
 sf::Sprite background;
-sf::Sprite scoresTable;
+sf::Sprite scoresSprite;
 int ballXdir;
 int ballYdir;
 int ballSpeed;
 bool isPaused;
 int lives;
 int scores;
-sf::Text levelLostMsgText;
-sf::Text okText;
-sf::Text cancelText;
+sf::Text levelLostMsgTextModal;
+sf::Text okTextModal;
+sf::Text cancelTextModal;
 sf::Text playerText;
 sf::Text scoresText;
-sf::Text bestScoresText;
-std::string levelLostMsg = "YOU HAVE LOST THE LEVEL.\nWOULD YOU LIKE TO REPEAT ONE?";
-std::string ok = "OK";
-std::string cancel = "Cancel";
+sf::Text highScoresText;
 sf::RectangleShape levelLostModal;
 int selectedModalItem = 1;
-std::string bestScores;
+std::string highScoresStr;
 
 using namespace std;
 
@@ -143,17 +142,10 @@ void handleBallMiss()
     }
 }
 
-void updateBall(int &ballSpeed, float &dt, std::vector<Brick> &bricks)
+void checkBallColiisionWithBrick(const sf::FloatRect &ballBounds, std::vector<Brick> &bricks)
 {
-    if (isPaused || gameState != playing)
-        return;
-    float angle = 45;
-    const sf::Vector2f currentBallPos = ball.getPosition();
-    const sf::FloatRect ballBounds = ball.getGlobalBounds();
-    const sf::FloatRect platformBounds = platform.getGlobalBounds();
     for (int i = 0; i < bricks.size(); i++)
     {
-        //const sf::FloatRect brickBounds = bricks[i].sprite.getGlobalBounds();
         sf::Sprite brick = bricks[i].sprite;
         const sf::FloatRect brickBounds = brick.getGlobalBounds();
         if (ballBounds.intersects(brickBounds))
@@ -162,23 +154,24 @@ void updateBall(int &ballSpeed, float &dt, std::vector<Brick> &bricks)
             bricks.erase(bricks.begin() + i);
         }
     }
+}
 
+void checkBallColiisionWithPlatform(const sf::FloatRect &ballBounds)
+{
+    const sf::FloatRect platformBounds = platform.getGlobalBounds();
     if (ballBounds.intersects(platformBounds))
     {
         handleCollisionWithPlatform(platformBounds, ballBounds);
     }
+}
 
-    const float S = ballSpeed * dt;
-    sf::Vector2f newLocalCoords = toEuclidean(S, angle);
-    newLocalCoords.x = ballXdir * newLocalCoords.x;
-    newLocalCoords.y = ballYdir * newLocalCoords.y;
-    sf::Vector2f newGlobalCoords = currentBallPos + newLocalCoords;
-
+void checkBallColiisionWithEdges(const sf::FloatRect &ballBounds, sf::Vector2f &newGlobalCoords)
+{
     if (newGlobalCoords.x >= RIGHT_EDGE - BALL_SIZE)
     {
         ballXdir = -1 * abs(ballXdir);
     }
-    if (newGlobalCoords.x <= LEFT_EDGE + BALL_SIZE)
+    if (newGlobalCoords.x <= LEFT_EDGE)
     {
         ballXdir = 1 * abs(ballXdir);
     }
@@ -186,12 +179,28 @@ void updateBall(int &ballSpeed, float &dt, std::vector<Brick> &bricks)
     {
         ballYdir = 1 * abs(ballYdir);
     }
+    ball.setPosition(newGlobalCoords);
     if (newGlobalCoords.y >= BOTTOM)
     {
         handleBallMiss();
-        return;
     }
-    ball.setPosition(newGlobalCoords);
+}
+
+void updateBall(int &ballSpeed, float &dt, std::vector<Brick> &bricks)
+{
+    if (isPaused || gameState != playing)
+        return;
+    const sf::FloatRect ballBounds = ball.getGlobalBounds();
+    checkBallColiisionWithBrick(ballBounds, bricks);
+    checkBallColiisionWithPlatform(ballBounds);
+    const float angle = 45;
+    const sf::Vector2f currentBallPos = ball.getPosition();
+    const float S = ballSpeed * dt;
+    sf::Vector2f newLocalCoords = toEuclidean(S, angle);
+    newLocalCoords.x = ballXdir * newLocalCoords.x;
+    newLocalCoords.y = ballYdir * newLocalCoords.y;
+    sf::Vector2f newGlobalCoords = currentBallPos + newLocalCoords;
+    checkBallColiisionWithEdges(ballBounds, newGlobalCoords);
 }
 
 void updatePlatform(sf::Keyboard::Key &key, float &dt)
@@ -201,9 +210,7 @@ void updatePlatform(sf::Keyboard::Key &key, float &dt)
     if (key == sf::Keyboard::Left)
     {
         if (platformPosition.x > gameFieldPosition.x)
-        {
             platform.move(-1 * speed * dt, 0);
-        }
     }
     if (key == sf::Keyboard::Right)
     {
@@ -223,8 +230,8 @@ void handleLeftKeyPressed(sf::Keyboard::Key &key, float &dt)
         if (gameState == level_lost_modal)
         {
             selectedModalItem = 1;
-            okText.setStyle(sf::Text::Bold | sf::Text::Underlined);
-            cancelText.setStyle(sf::Text::Regular);
+            okTextModal.setStyle(sf::Text::Bold | sf::Text::Underlined);
+            cancelTextModal.setStyle(sf::Text::Regular);
         }
     }
 }
@@ -240,8 +247,8 @@ void handleRightKeyPressed(sf::Keyboard::Key &key, float &dt)
         if (gameState == level_lost_modal)
         {
             selectedModalItem = 2;
-            okText.setStyle(sf::Text::Regular);
-            cancelText.setStyle(sf::Text::Bold | sf::Text::Underlined);
+            okTextModal.setStyle(sf::Text::Regular);
+            cancelTextModal.setStyle(sf::Text::Bold | sf::Text::Underlined);
         }
     }
 }
@@ -330,9 +337,9 @@ void drawBricks(sf::RenderWindow &window, std::vector<Brick> &bricks)
 void drawLevelLostModal(sf::RenderWindow &window)
 {
     window.draw(levelLostModal);
-    window.draw(levelLostMsgText);
-    window.draw(okText);
-    window.draw(cancelText);
+    window.draw(levelLostMsgTextModal);
+    window.draw(okTextModal);
+    window.draw(cancelTextModal);
 }
 
 void drawSidebar(sf::RenderWindow &window)
@@ -340,7 +347,7 @@ void drawSidebar(sf::RenderWindow &window)
     window.draw(playerText);
     window.draw(player);
     window.draw(scoresText);
-    window.draw(scoresTable);
+    window.draw(scoresSprite);
     sf::Vector2f initPos = {x : 370, y : 310};
     //cout << lives << endl;
     for (int i = 0; i < lives; i++)
@@ -349,8 +356,8 @@ void drawSidebar(sf::RenderWindow &window)
         window.draw(livesDesignation);
         initPos.y = initPos.y + 30;
     }
-    window.draw(best_score);
-    window.draw(bestScoresText);
+    window.draw(highScoresSprite);
+    window.draw(highScoresText);
 }
 
 // Рисует и выводит один кадр
@@ -445,8 +452,8 @@ void adjustSidebar()
     playerText.setString(playerName);
     playerText.setPosition({x : 440, y : 80});
 
-    scoresTable.setTexture(getScoresTexture());
-    scoresTable.setPosition(370, 190);
+    scoresSprite.setTexture(getScoresTexture());
+    scoresSprite.setPosition(370, 190);
 
     scoresText = sf::Text();
     scoresText.setFillColor(sf::Color::Red);
@@ -462,15 +469,15 @@ void adjustSidebar()
         livesDesignationSize.y / livesDesignation.getLocalBounds().height);
     livesDesignation.setRotation(-20);
 
-    best_score.setTexture(getBestScoresTexture());
-    best_score.setPosition(370, 430);
+    highScoresSprite.setTexture(getHighScoresTexture());
+    highScoresSprite.setPosition(370, 430);
 
-    bestScoresText = sf::Text();
-    bestScoresText.setFillColor(sf::Color::Yellow);
-    bestScoresText.setFont(getFont());
-    bestScoresText.setCharacterSize(50);
-    bestScoresText.setString(bestScores);
-    bestScoresText.setPosition({x : 450, y : 440});
+    highScoresText = sf::Text();
+    highScoresText.setFillColor(sf::Color::Yellow);
+    highScoresText.setFont(getFont());
+    highScoresText.setCharacterSize(50);
+    highScoresText.setString(highScoresStr);
+    highScoresText.setPosition({x : 450, y : 440});
 }
 
 void adjustGameLostModal()
@@ -479,40 +486,40 @@ void adjustGameLostModal()
     levelLostModal.setPosition(0, 0);
     levelLostModal.setFillColor(sf::Color(0, 0, 0, 200));
 
-    levelLostMsgText = sf::Text();
-    levelLostMsgText.setFillColor(sf::Color::Red);
-    levelLostMsgText.setStyle(sf::Text::Bold);
-    levelLostMsgText.setCharacterSize(25);
-    levelLostMsgText.setString(levelLostMsg);
-    levelLostMsgText.setPosition({x : WINDOW_WIDTH / 4, y : WINDOW_HEIGHT / 3});
+    levelLostMsgTextModal = sf::Text();
+    levelLostMsgTextModal.setFillColor(sf::Color::Red);
+    levelLostMsgTextModal.setStyle(sf::Text::Bold);
+    levelLostMsgTextModal.setCharacterSize(25);
+    levelLostMsgTextModal.setString("YOU HAVE LOST THE LEVEL.\nWOULD YOU LIKE TO REPEAT ONE?");
+    levelLostMsgTextModal.setPosition({x : WINDOW_WIDTH / 4, y : WINDOW_HEIGHT / 3});
 
-    okText = sf::Text();
-    okText.setFillColor(sf::Color::Red);
-    okText.setStyle(sf::Text::Bold | sf::Text::Underlined);
-    okText.setCharacterSize(25);
-    okText.setString(ok);
-    okText.setPosition({x : WINDOW_WIDTH * 1 / 3, y : WINDOW_HEIGHT / 2});
+    okTextModal = sf::Text();
+    okTextModal.setFillColor(sf::Color::Red);
+    okTextModal.setStyle(sf::Text::Bold | sf::Text::Underlined);
+    okTextModal.setCharacterSize(25);
+    okTextModal.setString("OK");
+    okTextModal.setPosition({x : WINDOW_WIDTH * 1 / 3, y : WINDOW_HEIGHT / 2});
 
-    cancelText = sf::Text();
-    cancelText.setFillColor(sf::Color::Red);
-    cancelText.setStyle(sf::Text::Regular);
-    cancelText.setCharacterSize(25);
-    cancelText.setString(cancel);
-    cancelText.setPosition({x : WINDOW_WIDTH * 2 / 3, y : WINDOW_HEIGHT / 2});
+    cancelTextModal = sf::Text();
+    cancelTextModal.setFillColor(sf::Color::Red);
+    cancelTextModal.setStyle(sf::Text::Regular);
+    cancelTextModal.setCharacterSize(25);
+    cancelTextModal.setString("CANCEL");
+    cancelTextModal.setPosition({x : WINDOW_WIDTH * 2 / 3, y : WINDOW_HEIGHT / 2});
 
-    levelLostMsgText.setFont(getFont());
-    okText.setFont(getFont());
-    cancelText.setFont(getFont());
+    levelLostMsgTextModal.setFont(getFont());
+    okTextModal.setFont(getFont());
+    cancelTextModal.setFont(getFont());
 }
 
 void resetGlobalVars()
 {
     isPaused = true;
-    lives = 3;
+    lives = 1;
     int selectedModalItem = 1;
     gameState = playing;
     scores = 0;
-    bestScores = "";
+    highScoresStr = "";
 }
 
 void getBestScores()
@@ -524,8 +531,7 @@ void getBestScores()
         if (getline(fileout, line))
         {
             size_t i = line.find(' ');
-            bestScores = line.substr(0, i);
-            //int score = std::stoi(scoreStr);
+            highScoresStr = line.substr(0, i);
         }
     }
     fileout.close();
@@ -536,21 +542,16 @@ bool comparePlayers(const Player &a, const Player &b)
     return a.scores >= b.scores;
 }
 
-void handleScores()
+void readHighScores(std::list<Player> &bestScores)
 {
-    std::list<Player> bestScores;
-    if (scores != 0)
-    {
-        Player currPlayer = {scores, playerName};
-        bestScores.push_front(currPlayer);
-    }
     std::ifstream fileout("HighScores.txt"); // окрываем файл для чтения
     if (fileout.is_open())
     {
         std::string line;
-
         while (getline(fileout, line))
         {
+            if (line.empty())
+                break;
             size_t i = line.find(' ');
             std::string scoreStr = line.substr(0, i);
             int score = std::stoi(scoreStr);
@@ -559,11 +560,14 @@ void handleScores()
         }
     }
     fileout.close();
+}
 
+void writeHighScores(std::list<Player> &bestScores)
+{
+    int numberOfRecords = 5;
     std::ofstream filein;          // поток для записи
     filein.open("HighScores.txt"); // окрываем файл для записи
     bestScores.sort(comparePlayers);
-    int numberOfRecords = 5;
     for (Player player : bestScores)
     {
         filein << player.scores << " " << player.name << endl;
@@ -572,6 +576,18 @@ void handleScores()
             break;
     }
     filein.close();
+}
+
+void handleScores()
+{
+    std::list<Player> bestScores;
+    if (scores != 0)
+    {
+        Player currPlayer = {scores, playerName};
+        bestScores.push_front(currPlayer);
+    }
+    readHighScores(bestScores);
+    writeHighScores(bestScores);
 }
 
 void playGame(sf::RenderWindow &window)

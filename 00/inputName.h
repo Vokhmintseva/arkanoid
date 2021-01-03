@@ -15,7 +15,7 @@ void getPlayerName(sf::RenderWindow &window)
     sf::Text label;
     label.setPosition({x : 270, y : 200});
     label.setFont(getFont());
-    label.setFillColor(sf::Color::Yellow);
+    label.setFillColor(sf::Color::White);
     label.setString("Enter your name");
 
     sf::Text plName;

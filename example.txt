@@ -1,5 +1,5 @@
-150 Olya
 110 Masha
 100 Nikolay
 95 Anna
 90 Marina
+80 Ivan
