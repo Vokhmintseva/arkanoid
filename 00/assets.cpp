@@ -4,6 +4,8 @@ sf::Texture ballTexture;
 sf::Texture playerTexture;
 sf::Texture scoresTexture;
 sf::Texture highScoresTexture;
+sf::Texture highScoresLegendTexture;
+sf::Texture trophyTexture;
 sf::Texture backgroundTexture;
 sf::Texture backgroundMenuTexture;
 sf::Font font;
@@ -16,6 +18,8 @@ void loadAssets()
     playerTexture.loadFromFile("00/images/player.png");
     scoresTexture.loadFromFile("00/images/score.png");
     highScoresTexture.loadFromFile("00/images/high-score.png");
+    highScoresLegendTexture.loadFromFile("00/images/high-score-legend.png");
+    trophyTexture.loadFromFile("00/images/trophy.png");
     backgroundTexture.loadFromFile("00/images/background.png");
     backgroundMenuTexture.loadFromFile("00/images/backgrMenu.png");
     font.loadFromFile("00/perfectDOSVGA437.ttf");
@@ -54,6 +58,16 @@ sf::Texture &getScoresTexture()
 sf::Texture &getHighScoresTexture()
 {
     return highScoresTexture;
+}
+
+sf::Texture &getHighScoresLegendTexture()
+{
+    return highScoresLegendTexture;
+}
+
+sf::Texture &getTrophyTexture()
+{
+    return trophyTexture;
 }
 
 sf::Texture &getBackgroundTexture()

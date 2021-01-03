@@ -10,6 +10,7 @@
 #include "assets.cpp"
 #include "store.cpp"
 #include "globalVars.cpp"
+#include "highScores.cpp"
 #include "game.h"
 #include "splashScreen.h"
 #include "menu.h"
@@ -38,6 +39,9 @@ int main()
             break;
         case start_game:
             playGame(window);
+            break;
+        case high_scores:
+            showHighScores(window);
             break;
         case quit:
             game = !game;

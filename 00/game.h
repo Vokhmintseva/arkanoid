@@ -7,11 +7,11 @@ struct Brick
     bool isDestroyed;
 };
 
-struct Player
-{
-    int scores;
-    std::string name;
-};
+// struct Player
+// {
+//     int scores;
+//     std::string name;
+// };
 
 const sf::Vector2f gameFieldPosition = sf::Vector2f(50, 50);
 const float GAME_FIELD_WIDTH = 300;

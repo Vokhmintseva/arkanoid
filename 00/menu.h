@@ -1,5 +1,6 @@
 const int menuItemsNumber = 3;
-int selectedItem = 0;
+int selectedItem;
+sf::Text menuItems[menuItemsNumber];
 
 void returnPressedHandle()
 {
@@ -9,6 +10,7 @@ void returnPressedHandle()
         gameState = input_name;
         break;
     case 1:
+        gameState = high_scores;
         break;
     case 2:
         gameState = quit;
@@ -48,15 +50,11 @@ void drawMenuItems(sf::RenderWindow &window, sf::Text menuItems[])
     }
 }
 
-void menu(sf::RenderWindow &window)
+void createMenu()
 {
-    sf::Sprite background;
-    background.setTexture(getBackgroundMenuTexture());
-    const float windowWidth = 800;
-    const float windowHeight = 600;
-    sf::Text menuItems[menuItemsNumber];
+    const float windowWidth = static_cast<float>(WINDOW_WIDTH);
+    const float windowHeight = static_cast<float>(WINDOW_HEIGHT);
     std::string menuItemsStrings[menuItemsNumber] = {"Play", "HighScores", "Exit"};
-
     for (int i = 0; i < menuItemsNumber; i++)
     {
         menuItems[i].setFillColor(sf::Color::Yellow);
@@ -66,38 +64,54 @@ void menu(sf::RenderWindow &window)
     }
     menuItems[0].setFillColor(sf::Color::Red);
     menuItems[0].setStyle(sf::Text::Bold | sf::Text::Underlined);
+}
+
+void menuPollEvents(sf::RenderWindow &window)
+{
+    sf::Event event;
+    while (window.pollEvent(event))
+    {
+        switch (event.type)
+        {
+        case sf::Event::KeyReleased:
+            switch (event.key.code)
+            {
+            case sf::Keyboard::Up:
+                moveUp(menuItems);
+                break;
+            case sf::Keyboard::Down:
+                moveDown(menuItems);
+                break;
+            case sf::Keyboard::Return:
+                returnPressedHandle();
+                break;
+            }
+            break;
+        case sf::Event::Closed:
+            gameState = quit;
+            break;
+        }
+    }
+}
+
+void menu(sf::RenderWindow &window)
+{
+    selectedItem = 0;
+    sf::Sprite background;
+    background.setTexture(getBackgroundMenuTexture());
+    createMenu();
 
     while (window.isOpen())
     {
-        sf::Event event;
-        while (window.pollEvent(event))
-        {
-            switch (event.type)
-            {
-            case sf::Event::KeyReleased:
-                switch (event.key.code)
-                {
-                case sf::Keyboard::Up:
-                    moveUp(menuItems);
-                    break;
-
-                case sf::Keyboard::Down:
-                    moveDown(menuItems);
-                    break;
-
-                case sf::Keyboard::Return:
-                    returnPressedHandle();
-                    return;
-                }
-                break;
-            case sf::Event::Closed:
-                gameState = quit;
-                return;
-            }
-        }
+        menuPollEvents(window);
         window.clear();
         window.draw(background);
         drawMenuItems(window, menuItems);
         window.display();
+        if (
+            gameState == input_name ||
+            gameState == high_scores ||
+            gameState == quit)
+            return;
     }
 }

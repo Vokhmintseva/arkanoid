@@ -648,6 +648,8 @@ regex
 
 C:/OsnProjDe/arkanoid/00/globalVars.cpp
 
+C:/OsnProjDe/arkanoid/00/highScores.cpp
+
 C:/OsnProjDe/arkanoid/00/inputName.h
 string
 -
@@ -677,6 +679,8 @@ store.cpp
 C:/OsnProjDe/arkanoid/00/store.cpp
 globalVars.cpp
 C:/OsnProjDe/arkanoid/00/globalVars.cpp
+highScores.cpp
+C:/OsnProjDe/arkanoid/00/highScores.cpp
 game.h
 C:/OsnProjDe/arkanoid/00/game.h
 splashScreen.h

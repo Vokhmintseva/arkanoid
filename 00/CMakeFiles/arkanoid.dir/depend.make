@@ -75,6 +75,7 @@
 00/CMakeFiles/arkanoid.dir/main.cpp.obj: 00/assets.cpp
 00/CMakeFiles/arkanoid.dir/main.cpp.obj: 00/game.h
 00/CMakeFiles/arkanoid.dir/main.cpp.obj: 00/globalVars.cpp
+00/CMakeFiles/arkanoid.dir/main.cpp.obj: 00/highScores.cpp
 00/CMakeFiles/arkanoid.dir/main.cpp.obj: 00/inputName.h
 00/CMakeFiles/arkanoid.dir/main.cpp.obj: 00/main.cpp
 00/CMakeFiles/arkanoid.dir/main.cpp.obj: 00/menu.h
