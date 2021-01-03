@@ -5,6 +5,12 @@ struct Brick
     bool isDestroyed;
 };
 
+struct Player
+{
+    int scores;
+    std::string name;
+};
+
 const sf::Vector2f gameFieldPosition = sf::Vector2f(50, 50);
 const float GAME_FIELD_WIDTH = 300;
 const float GAME_FIELD_HEIGHT = 300;
@@ -40,11 +46,13 @@ sf::Text okText;
 sf::Text cancelText;
 sf::Text playerText;
 sf::Text scoresText;
+sf::Text bestScoresText;
 std::string levelLostMsg = "YOU HAVE LOST THE LEVEL.\nWOULD YOU LIKE TO REPEAT ONE?";
 std::string ok = "OK";
 std::string cancel = "Cancel";
 sf::RectangleShape levelLostModal;
 int selectedModalItem = 1;
+std::string bestScores;
 
 using namespace std;
 
@@ -333,14 +341,16 @@ void drawSidebar(sf::RenderWindow &window)
     window.draw(player);
     window.draw(scoresText);
     window.draw(scoresTable);
-    sf::Vector2f initPos = {x : 370, y : 250};
+    sf::Vector2f initPos = {x : 370, y : 310};
     //cout << lives << endl;
     for (int i = 0; i < lives; i++)
     {
         livesDesignation.setPosition(initPos);
         window.draw(livesDesignation);
-        initPos.y = initPos.y + 20;
+        initPos.y = initPos.y + 30;
     }
+    window.draw(best_score);
+    window.draw(bestScoresText);
 }
 
 // Рисует и выводит один кадр
@@ -425,32 +435,42 @@ void adjustBall()
 
 void adjustSidebar()
 {
-    playerText = sf::Text();
-    playerText.setFillColor(sf::Color::Yellow);
-    playerText.setFont(getFont());
-    playerText.setCharacterSize(20);
-    playerText.setString(playerName);
-    playerText.setPosition({x : 440, y : 80});
-
     player.setTexture(getPlayerTexture());
     player.setPosition(370, 50);
 
+    playerText = sf::Text();
+    playerText.setFillColor(sf::Color(232, 6, 107));
+    playerText.setFont(getFont());
+    playerText.setCharacterSize(30);
+    playerText.setString(playerName);
+    playerText.setPosition({x : 440, y : 80});
+
     scoresTable.setTexture(getScoresTexture());
-    scoresTable.setPosition(370, 150);
+    scoresTable.setPosition(370, 190);
 
     scoresText = sf::Text();
     scoresText.setFillColor(sf::Color::Red);
     scoresText.setFont(getFont());
-    scoresText.setCharacterSize(30);
+    scoresText.setCharacterSize(50);
     scoresText.setString(std::to_string(scores));
-    scoresText.setPosition({x : 450, y : 162});
+    scoresText.setPosition({x : 450, y : 192});
 
     livesDesignation.setTexture(getPlatformTexture());
-    sf::Vector2f livesDesignationSize(30, 10);
+    sf::Vector2f livesDesignationSize(40, 15);
     livesDesignation.setScale(
         livesDesignationSize.x / livesDesignation.getLocalBounds().width,
         livesDesignationSize.y / livesDesignation.getLocalBounds().height);
     livesDesignation.setRotation(-20);
+
+    best_score.setTexture(getBestScoresTexture());
+    best_score.setPosition(370, 430);
+
+    bestScoresText = sf::Text();
+    bestScoresText.setFillColor(sf::Color::Yellow);
+    bestScoresText.setFont(getFont());
+    bestScoresText.setCharacterSize(50);
+    bestScoresText.setString(bestScores);
+    bestScoresText.setPosition({x : 450, y : 440});
 }
 
 void adjustGameLostModal()
@@ -492,37 +512,76 @@ void resetGlobalVars()
     int selectedModalItem = 1;
     gameState = playing;
     scores = 0;
+    bestScores = "";
+}
+
+void getBestScores()
+{
+    std::ifstream fileout("HighScores.txt"); // окрываем файл для чтения
+    if (fileout.is_open())
+    {
+        std::string line;
+        if (getline(fileout, line))
+        {
+            size_t i = line.find(' ');
+            bestScores = line.substr(0, i);
+            //int score = std::stoi(scoreStr);
+        }
+    }
+    fileout.close();
+}
+
+bool comparePlayers(const Player &a, const Player &b)
+{
+    return a.scores >= b.scores;
 }
 
 void handleScores()
 {
-    std::ifstream file("HighScores.txt"); // окрываем файл для чтения
-    if (file.is_open())
+    std::list<Player> bestScores;
+    if (scores != 0)
+    {
+        Player currPlayer = {scores, playerName};
+        bestScores.push_front(currPlayer);
+    }
+    std::ifstream fileout("HighScores.txt"); // окрываем файл для чтения
+    if (fileout.is_open())
     {
         std::string line;
-        while (getline(file, line))
+
+        while (getline(fileout, line))
         {
-            std::cout << line << std::endl;
+            size_t i = line.find(' ');
+            std::string scoreStr = line.substr(0, i);
+            int score = std::stoi(scoreStr);
+            std::string name = line.substr(i + 1, line.length());
+            bestScores.push_back({score, name});
         }
     }
-    file.close();
+    fileout.close();
 
-    std::ofstream file2;          // поток для записи
-    file2.open("HighScores.txt"); // окрываем файл для записи
-    if (file2.is_open())
+    std::ofstream filein;          // поток для записи
+    filein.open("HighScores.txt"); // окрываем файл для записи
+    bestScores.sort(comparePlayers);
+    int numberOfRecords = 5;
+    for (Player player : bestScores)
     {
-        file2 << playerName << " " << scores << std::endl;
+        filein << player.scores << " " << player.name << endl;
+        numberOfRecords--;
+        if (numberOfRecords < 1)
+            break;
     }
-    file2.close();
+    filein.close();
 }
 
 void playGame(sf::RenderWindow &window)
 {
     resetGlobalVars();
+    getBestScores();
+    background.setTexture(getBackgroundTexture());
     adjustPlatform();
     adjustBall();
     adjustGameLostModal();
-    background.setTexture(getBackgroundTexture());
     adjustSidebar();
     std::vector<Brick> bricks = createBricksVector_1level({x : 65, y : 60});
     sf::RectangleShape gameField = createGameField();
@@ -533,7 +592,6 @@ void playGame(sf::RenderWindow &window)
         pollEvents(window, dt);
         updateBall(ballSpeed, dt, bricks);
         redrawFrame(window, bricks, gameField);
-
         if (
             gameState == quit ||
             gameState == menu_screen ||

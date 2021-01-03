@@ -5,6 +5,7 @@ sf::Texture playerTexture;
 sf::Texture scoresTexture;
 sf::Texture bestScoresTexture;
 sf::Texture backgroundTexture;
+sf::Texture backgroundMenuTexture;
 sf::Font font;
 
 void loadAssets()
@@ -16,6 +17,7 @@ void loadAssets()
     scoresTexture.loadFromFile("00/images/score.png");
     bestScoresTexture.loadFromFile("00/images/best-score.png");
     backgroundTexture.loadFromFile("00/images/background.png");
+    backgroundMenuTexture.loadFromFile("00/images/backgrMenu.png");
     font.loadFromFile("00/perfectDOSVGA437.ttf");
 }
 
@@ -57,4 +59,9 @@ sf::Texture &getBestScoresTexture()
 sf::Texture &getBackgroundTexture()
 {
     return backgroundTexture;
+}
+
+sf::Texture &getBackgroundMenuTexture()
+{
+    return backgroundMenuTexture;
 }

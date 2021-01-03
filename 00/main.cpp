@@ -2,6 +2,7 @@
 #include <cmath>
 #include <fstream>
 #include <iostream>
+#include <list>
 #include <SFML/Window.hpp>
 #include <vector>
 #include <conio.h>

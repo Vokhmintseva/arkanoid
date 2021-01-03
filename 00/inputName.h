@@ -13,39 +13,39 @@ void getPlayerName(sf::RenderWindow &window)
     std::string str;
 
     sf::Text label;
-    label.setPosition({x : 300, y : 200});
+    label.setPosition({x : 270, y : 200});
     label.setFont(getFont());
-    label.setFillColor(sf::Color::White);
+    label.setFillColor(sf::Color::Yellow);
     label.setString("Enter your name");
 
     sf::Text plName;
-    plName.setPosition({x : 265, y : 315});
+    plName.setPosition({x : 245, y : 315});
     plName.setFont(getFont());
     plName.setFillColor(sf::Color::Yellow);
     plName.setString("");
 
     sf::RectangleShape inputFieldBorder;
     inputFieldBorder.setSize(sf::Vector2f(330, 70));
-    inputFieldBorder.setPosition(250, 300);
+    inputFieldBorder.setPosition(230, 300);
     inputFieldBorder.setFillColor(sf::Color::Red);
 
     sf::RectangleShape inputField;
     inputField.setSize(sf::Vector2f(324, 64));
-    inputField.setPosition(253, 303);
+    inputField.setPosition(233, 303);
     inputField.setFillColor(sf::Color::Black);
 
     sf::RectangleShape playButtonBorder;
     playButtonBorder.setSize(sf::Vector2f(106, 56));
-    playButtonBorder.setPosition(347, 447);
+    playButtonBorder.setPosition(337, 447);
     playButtonBorder.setFillColor(sf::Color::Red);
 
     sf::RectangleShape playButton;
     playButton.setSize(sf::Vector2f(100, 50));
-    playButton.setPosition(350, 450);
+    playButton.setPosition(340, 450);
     playButton.setFillColor(sf::Color::Yellow);
 
     sf::Text playText;
-    playText.setPosition({x : 355, y : 455});
+    playText.setPosition({x : 345, y : 455});
     playText.setFont(getFont());
     playText.setFillColor(sf::Color::Red);
     playText.setString("PLAY!");

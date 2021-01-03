@@ -1,1 +1,6 @@
-Olga 650
+350 Olga
+350 Ann
+350 Nikolay
+350 Jack
+350 Ed
+
