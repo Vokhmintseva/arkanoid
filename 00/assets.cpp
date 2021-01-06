@@ -6,8 +6,16 @@ sf::Texture scoresTexture;
 sf::Texture highScoresTexture;
 sf::Texture highScoresLegendTexture;
 sf::Texture trophyTexture;
-sf::Texture backgroundTexture;
+sf::Texture backgroundMainTexture;
 sf::Texture backgroundMenuTexture;
+sf::Texture expandPlatformTexture;
+sf::Texture twoBallsTexture;
+sf::Texture slowBallDownTexture;
+sf::Texture accelerateBallTexture;
+sf::Texture extraLifeTexture;
+sf::Texture portalDoorTexture;
+sf::Texture stickyBallTexture;
+
 sf::Font font;
 
 void loadAssets()
@@ -20,14 +28,17 @@ void loadAssets()
     highScoresTexture.loadFromFile("00/images/high-score.png");
     highScoresLegendTexture.loadFromFile("00/images/high-score-legend.png");
     trophyTexture.loadFromFile("00/images/trophy.png");
-    backgroundTexture.loadFromFile("00/images/background.png");
+    backgroundMainTexture.loadFromFile("00/images/backgroundMain.png");
     backgroundMenuTexture.loadFromFile("00/images/backgrMenu.png");
-    font.loadFromFile("00/perfectDOSVGA437.ttf");
-}
+    expandPlatformTexture.loadFromFile("00/images/expand.png");
+    twoBallsTexture.loadFromFile("00/images/ballX2.png");
+    slowBallDownTexture.loadFromFile("00/images/snail.png");
+    accelerateBallTexture.loadFromFile("00/images/acceleration.png");
+    extraLifeTexture.loadFromFile("00/images/heart.png");
+    portalDoorTexture.loadFromFile("00/images/door.png");
+    stickyBallTexture.loadFromFile("00/images/duct-tape.png");
 
-sf::Font &getFont()
-{
-    return font;
+    font.loadFromFile("00/perfectDOSVGA437.ttf");
 }
 
 sf::Texture &getPlatformTexture()
@@ -70,12 +81,52 @@ sf::Texture &getTrophyTexture()
     return trophyTexture;
 }
 
-sf::Texture &getBackgroundTexture()
+sf::Texture &getBackgroundMainTexture()
 {
-    return backgroundTexture;
+    return backgroundMainTexture;
 }
 
 sf::Texture &getBackgroundMenuTexture()
 {
     return backgroundMenuTexture;
+}
+
+sf::Texture &getExpandPlatformTexture()
+{
+    return expandPlatformTexture;
+}
+
+sf::Texture &getTwoBallsTexture()
+{
+    return twoBallsTexture;
+}
+
+sf::Texture &getSlowBallDownTexture()
+{
+    return slowBallDownTexture;
+}
+
+sf::Texture &getAccelerateBallTexture()
+{
+    return accelerateBallTexture;
+}
+
+sf::Texture &getExtraLifeTexture()
+{
+    return extraLifeTexture;
+}
+
+sf::Texture &getPortalDoorTexture()
+{
+    return portalDoorTexture;
+}
+
+sf::Texture &getStickyBallTexture()
+{
+    return stickyBallTexture;
+}
+
+sf::Font &getFont()
+{
+    return font;
 }

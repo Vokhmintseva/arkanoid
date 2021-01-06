@@ -1,10 +1,10 @@
 const int menuItemsNumber = 3;
-int selectedItem;
+int selectedMenuItem;
 sf::Text menuItems[menuItemsNumber];
 
 void returnPressedHandle()
 {
-    switch (selectedItem)
+    switch (selectedMenuItem)
     {
     case 0:
         gameState = input_name;
@@ -20,25 +20,26 @@ void returnPressedHandle()
 
 void moveUp(sf::Text menuItems[])
 {
-    if (selectedItem - 1 >= 0)
+    if (selectedMenuItem - 1 >= 0)
     {
-        menuItems[selectedItem].setFillColor(sf::Color::Yellow);
-        menuItems[selectedItem].setStyle(sf::Text::Regular);
-        selectedItem--;
-        menuItems[selectedItem].setFillColor(sf::Color::Red);
-        menuItems[selectedItem].setStyle(sf::Text::Bold | sf::Text::Underlined);
+        menuItems[selectedMenuItem].setFillColor(sf::Color::Yellow);
+        menuItems[selectedMenuItem].setStyle(sf::Text::Regular);
+        selectedMenuItem--;
+        menuItems[selectedMenuItem].setFillColor(sf::Color::Red);
+
+        menuItems[selectedMenuItem].setStyle(sf::Text::Bold | sf::Text::Underlined);
     }
 }
 
 void moveDown(sf::Text menuItems[])
 {
-    if (selectedItem + 1 < menuItemsNumber)
+    if (selectedMenuItem + 1 < menuItemsNumber)
     {
-        menuItems[selectedItem].setFillColor(sf::Color::Yellow);
-        menuItems[selectedItem].setStyle(sf::Text::Regular);
-        selectedItem++;
-        menuItems[selectedItem].setFillColor(sf::Color::Red);
-        menuItems[selectedItem].setStyle(sf::Text::Bold | sf::Text::Underlined);
+        menuItems[selectedMenuItem].setFillColor(sf::Color::Yellow);
+        menuItems[selectedMenuItem].setStyle(sf::Text::Regular);
+        selectedMenuItem++;
+        menuItems[selectedMenuItem].setFillColor(sf::Color::Red);
+        menuItems[selectedMenuItem].setStyle(sf::Text::Bold | sf::Text::Underlined);
     }
 }
 
@@ -50,10 +51,8 @@ void drawMenuItems(sf::RenderWindow &window, sf::Text menuItems[])
     }
 }
 
-void createMenu()
+void createMenu(const float windowWidth, const float windowHeight)
 {
-    const float windowWidth = static_cast<float>(WINDOW_WIDTH);
-    const float windowHeight = static_cast<float>(WINDOW_HEIGHT);
     std::string menuItemsStrings[menuItemsNumber] = {"Play", "HighScores", "Exit"};
     for (int i = 0; i < menuItemsNumber; i++)
     {
@@ -96,10 +95,12 @@ void menuPollEvents(sf::RenderWindow &window)
 
 void menu(sf::RenderWindow &window)
 {
-    selectedItem = 0;
+    const float windowWidth = static_cast<float>(WINDOW_WIDTH);
+    const float windowHeight = static_cast<float>(WINDOW_HEIGHT);
+    selectedMenuItem = 0;
     sf::Sprite background;
     background.setTexture(getBackgroundMenuTexture());
-    createMenu();
+    createMenu(windowWidth, windowHeight);
 
     while (window.isOpen())
     {

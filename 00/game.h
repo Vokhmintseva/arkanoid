@@ -1,17 +1,34 @@
-#include <regex>
+#include <cstdlib>
+#include <ctime>
+#include <map>
+#include <vector>
+#include <algorithm>
 
+using namespace std;
+
+enum PrizeType
+{
+    expand_platform,
+    two_balls,
+    slow_ball_down,
+    accelerate_ball,
+    extra_life,
+    portal_door,
+    sticky_ball,
+    none
+};
+
+struct Prize
+{
+    PrizeType prizeType;
+    sf::Sprite *prizeSprite;
+};
 struct Brick
 {
     sf::Sprite sprite;
     sf::Vector2f position;
-    bool isDestroyed;
+    Prize prize;
 };
-
-// struct Player
-// {
-//     int scores;
-//     std::string name;
-// };
 
 const sf::Vector2f gameFieldPosition = sf::Vector2f(50, 50);
 const float GAME_FIELD_WIDTH = 300;
@@ -37,6 +54,13 @@ sf::Sprite highScoresSprite;
 sf::Sprite player;
 sf::Sprite background;
 sf::Sprite scoresSprite;
+sf::Sprite expandPlatform;
+sf::Sprite twoBalls;
+sf::Sprite slowBallDown;
+sf::Sprite accelerateBall;
+sf::Sprite extraLife;
+sf::Sprite portal;
+sf::Sprite stickyBall;
 int ballXdir;
 int ballYdir;
 int ballSpeed;
@@ -52,8 +76,16 @@ sf::Text highScoresText;
 sf::RectangleShape levelLostModal;
 int selectedModalItem = 1;
 std::string highScoresStr;
+std::vector<sf::Sprite *> activePrizes;
 
-using namespace std;
+std::map<PrizeType, sf::Sprite *> prizesSprites = {
+    {expand_platform, &expandPlatform},
+    {two_balls, &twoBalls},
+    {slow_ball_down, &slowBallDown},
+    {accelerate_ball, &accelerateBall},
+    {extra_life, &extraLife},
+    {portal_door, &portal},
+    {sticky_ball, &stickyBall}};
 
 //из полярных в евклидовы координаты
 sf::Vector2f toEuclidean(float radius, float angle)
@@ -79,18 +111,37 @@ void resetBall()
     ball.setPosition(INITIAL_BALL_X, INITIAL_BALL_Y);
 }
 
-Brick createBrick(sf::Color color, sf::Vector2f position)
+Brick createBrick(sf::Color color, sf::Vector2f position, map<int, PrizeType> prizesAssignment, const int index)
 {
     brick.setPosition(position);
     brick.setColor(color);
     Brick oneBrick;
+    // oneBrick.sprite.setPosition(position);
+    // oneBrick.sprite.setColor(color);
     oneBrick.sprite = brick;
-    oneBrick.position = position;
-    oneBrick.isDestroyed = false;
+    //oneBrick.position = position;
+    if (prizesAssignment.count(index))
+    {
+        oneBrick.sprite.setColor(sf::Color(41, 255, 0));
+        PrizeType prize = prizesAssignment[index];
+        oneBrick.prize.prizeType = prize;
+        oneBrick.prize.prizeSprite = prizesSprites[prize];
+    }
+    else
+    {
+        oneBrick.prize.prizeType = none;
+    }
     return oneBrick;
 }
 
-void handleCollisionWithBrick(sf::FloatRect brickBounds, sf::FloatRect ballBounds)
+void handlePrize(sf::FloatRect brickBounds, PrizeType prizeType)
+{
+    sf::Sprite *spritePtr = prizesSprites[prizeType];
+    spritePtr->setPosition(brickBounds.left, brickBounds.top);
+    activePrizes.push_back(spritePtr);
+}
+
+void handleCollisionWithBrick(sf::FloatRect brickBounds, sf::FloatRect ballBounds, Brick brick)
 {
     scores = scores + 50;
     scoresText.setString(std::to_string(scores));
@@ -106,6 +157,10 @@ void handleCollisionWithBrick(sf::FloatRect brickBounds, sf::FloatRect ballBound
         (ballCenter > (brickBounds.left + brickBounds.width)))
     {
         ballXdir = -1 * ballXdir;
+    }
+    if (brick.prize.prizeType != none)
+    {
+        handlePrize(brickBounds, brick.prize.prizeType);
     }
 }
 
@@ -150,7 +205,7 @@ void checkBallColiisionWithBrick(const sf::FloatRect &ballBounds, std::vector<Br
         const sf::FloatRect brickBounds = brick.getGlobalBounds();
         if (ballBounds.intersects(brickBounds))
         {
-            handleCollisionWithBrick(brickBounds, ballBounds);
+            handleCollisionWithBrick(brickBounds, ballBounds, bricks[i]);
             bricks.erase(bricks.begin() + i);
         }
     }
@@ -253,7 +308,7 @@ void handleRightKeyPressed(sf::Keyboard::Key &key, float &dt)
     }
 }
 
-void handleReturnKeyPressed()
+void handleReturnKeyReleased()
 {
     if (gameState == level_lost_modal)
     {
@@ -277,7 +332,7 @@ void onKeyReleased(sf::Event::KeyEvent &key, float &dt)
         isPaused = !isPaused;
         break;
     case sf::Keyboard::Return:
-        handleReturnKeyPressed();
+        handleReturnKeyReleased();
         return;
     default:
         break;
@@ -302,7 +357,6 @@ void onKeyPressed(sf::Event::KeyEvent &key, float &dt)
 //опрашивает и обрабатывает доступные события в цикле
 void pollEvents(sf::RenderWindow &window, float &dt)
 {
-
     sf::Event event;
     while (window.pollEvent(event))
     {
@@ -327,10 +381,7 @@ void drawBricks(sf::RenderWindow &window, std::vector<Brick> &bricks)
 {
     for (std::vector<int>::size_type i = 0; i != bricks.size(); i++)
     {
-        if (!bricks[i].isDestroyed)
-        {
-            window.draw(bricks[i].sprite);
-        }
+        window.draw(bricks[i].sprite);
     }
 }
 
@@ -360,6 +411,14 @@ void drawSidebar(sf::RenderWindow &window)
     window.draw(highScoresText);
 }
 
+void drawPrizes(sf::RenderWindow &window)
+{
+    for (sf::Sprite *prizeSprite : activePrizes)
+    {
+        window.draw(*prizeSprite);
+    }
+}
+
 // Рисует и выводит один кадр
 void redrawFrame(sf::RenderWindow &window, std::vector<Brick> bricks, sf::RectangleShape field)
 {
@@ -370,6 +429,7 @@ void redrawFrame(sf::RenderWindow &window, std::vector<Brick> bricks, sf::Rectan
     drawSidebar(window);
     window.draw(platform);
     window.draw(ball);
+    drawPrizes(window);
     if (gameState == level_lost_modal)
     {
         drawLevelLostModal(window);
@@ -377,24 +437,75 @@ void redrawFrame(sf::RenderWindow &window, std::vector<Brick> bricks, sf::Rectan
     window.display();
 }
 
+int getRandomNumber(int min, int max)
+{
+    // const double fraction = 1.0 / (static_cast<double>(RAND_MAX) + 1.0);
+    // return static_cast<int>(rand() * fraction * (max - min + 1) + min);
+    return rand() % (max + 1);
+}
+
+int changeIndex(int index, const int bricksNumber)
+{
+    index = index + 1;
+    if (index > bricksNumber - 1)
+    {
+        index = index - 2;
+    }
+    return index;
+}
+
+vector<int> definePrizesBricksIndexes(const int bricksNumber, const int numberOfRandoms)
+{
+    srand(static_cast<unsigned int>(time(0))); // устанавливаем значение системных часов в качестве стартового числа
+    vector<int> prizeBricksIndexes;
+    while (prizeBricksIndexes.size() < numberOfRandoms)
+    {
+        int index = getRandomNumber(0, bricksNumber - 1);
+        while (std::find(prizeBricksIndexes.begin(), prizeBricksIndexes.end(), index) != prizeBricksIndexes.end())
+            index = changeIndex(index, bricksNumber);
+        prizeBricksIndexes.push_back(index);
+        //std::cout << index << "\t";
+    }
+    //std::cout << std::endl;
+    prizeBricksIndexes = {27, 28, 29};
+    return prizeBricksIndexes;
+}
+
+int getBrickIndex(int row, int column, const int columnsTotal)
+{
+    return (row * columnsTotal + column);
+}
+
 std::vector<Brick> createBricksVector_1level(sf::Vector2f startPosition)
 {
+    const int bricksNumber = 30;
+    const int bricksWithPrizesNum = 3;
+    vector<int> prizeBricksIndexes = definePrizesBricksIndexes(bricksNumber, bricksWithPrizesNum);
+    map<int, PrizeType> prizesAssignment = {
+        {prizeBricksIndexes[0], expand_platform},
+        {prizeBricksIndexes[1], slow_ball_down},
+        {prizeBricksIndexes[2], accelerate_ball}};
     brick.setTexture(getBrickTexture());
     std::vector<Brick> bricks;
-    int k = 0;
     float xStart = startPosition.x;
     float yStart = startPosition.y;
-    for (int i = 0; i < 5; i++)
+    const int rowsTotal = 5;
+    const int columnsTotal = 6;
+    for (int i = 0; i < rowsTotal; i++)
     {
-        for (int j = 0; j < 6; j++)
+        for (int j = 0; j < columnsTotal; j++)
         {
-            bricks.push_back(createBrick(sf::Color(250, 107, 235), {x : xStart, y : yStart}));
-            k++;
+            const int index = getBrickIndex(i, j, columnsTotal);
+            bricks.push_back(createBrick(sf::Color(250, 107, 235), {x : xStart, y : yStart}, prizesAssignment, index));
             xStart = xStart + 45;
         }
         xStart = startPosition.x;
         yStart = yStart + 25;
     }
+    // for (int i = 0; i < bricksNumber; i++)
+    // {
+    //     cout << bricks[i].prize << "\t";
+    // }
     return bricks;
 }
 
@@ -590,15 +701,38 @@ void handleScores()
     writeHighScores(bestScores);
 }
 
+void loadPrizesTextures()
+{
+    expandPlatform.setTexture(getExpandPlatformTexture());
+    twoBalls.setTexture(getTwoBallsTexture());
+    slowBallDown.setTexture(getSlowBallDownTexture());
+    accelerateBall.setTexture(getAccelerateBallTexture());
+    extraLife.setTexture(getExtraLifeTexture());
+    portal.setTexture(getPortalDoorTexture());
+    stickyBall.setTexture(getStickyBallTexture());
+}
+
+void updatePrizes(float &dt)
+{
+    const float prizeSpeed = 100;
+    for (sf::Sprite *prizeSprite : activePrizes)
+    {
+        sf::Vector2f currPos = prizeSprite->getPosition();
+        const float newYpos = currPos.y + dt * prizeSpeed;
+        prizeSprite->setPosition(currPos.x, newYpos);
+    }
+}
+
 void playGame(sf::RenderWindow &window)
 {
     resetGlobalVars();
     getBestScores();
-    background.setTexture(getBackgroundTexture());
+    background.setTexture(getBackgroundMainTexture());
     adjustPlatform();
     adjustBall();
     adjustGameLostModal();
     adjustSidebar();
+    loadPrizesTextures();
     std::vector<Brick> bricks = createBricksVector_1level({x : 65, y : 60});
     sf::RectangleShape gameField = createGameField();
     sf::Clock clock;
@@ -607,6 +741,7 @@ void playGame(sf::RenderWindow &window)
         float dt = clock.restart().asSeconds();
         pollEvents(window, dt);
         updateBall(ballSpeed, dt, bricks);
+        updatePrizes(dt);
         redrawFrame(window, bricks, gameField);
         if (
             gameState == quit ||
