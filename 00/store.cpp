@@ -7,7 +7,13 @@ enum states
     level_lost,
     level_lost_modal,
     quit,
-    high_scores
+    high_scores,
+    platform_expansion,
+    ball_acceleration,
+    ball_slowdown,
+    open_portal,
+    ball_stick_platform,
+    add_extra_life
 };
 
 states gameState = menu_screen;

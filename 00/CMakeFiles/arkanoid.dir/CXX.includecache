@@ -653,6 +653,8 @@ vector
 -
 algorithm
 -
+iterator
+-
 
 C:/OsnProjDe/arkanoid/00/globalVars.cpp
 

@@ -3,6 +3,7 @@
 #include <map>
 #include <vector>
 #include <algorithm>
+#include <iterator>
 
 using namespace std;
 
@@ -25,8 +26,8 @@ struct Prize
 };
 struct Brick
 {
-    sf::Sprite sprite;
-    sf::Vector2f position;
+    sf::Sprite brickSprite;
+    //sf::Vector2f position;
     Prize prize;
 };
 
@@ -118,11 +119,11 @@ Brick createBrick(sf::Color color, sf::Vector2f position, map<int, PrizeType> pr
     Brick oneBrick;
     // oneBrick.sprite.setPosition(position);
     // oneBrick.sprite.setColor(color);
-    oneBrick.sprite = brick;
+    oneBrick.brickSprite = brick;
     //oneBrick.position = position;
     if (prizesAssignment.count(index))
     {
-        oneBrick.sprite.setColor(sf::Color(41, 255, 0));
+        oneBrick.brickSprite.setColor(sf::Color(41, 255, 0));
         PrizeType prize = prizesAssignment[index];
         oneBrick.prize.prizeType = prize;
         oneBrick.prize.prizeSprite = prizesSprites[prize];
@@ -201,7 +202,7 @@ void checkBallColiisionWithBrick(const sf::FloatRect &ballBounds, std::vector<Br
 {
     for (int i = 0; i < bricks.size(); i++)
     {
-        sf::Sprite brick = bricks[i].sprite;
+        sf::Sprite brick = bricks[i].brickSprite;
         const sf::FloatRect brickBounds = brick.getGlobalBounds();
         if (ballBounds.intersects(brickBounds))
         {
@@ -381,7 +382,7 @@ void drawBricks(sf::RenderWindow &window, std::vector<Brick> &bricks)
 {
     for (std::vector<int>::size_type i = 0; i != bricks.size(); i++)
     {
-        window.draw(bricks[i].sprite);
+        window.draw(bricks[i].brickSprite);
     }
 }
 
@@ -712,6 +713,55 @@ void loadPrizesTextures()
     stickyBall.setTexture(getStickyBallTexture());
 }
 
+// void detectPrizeType(sf::Sprite *prizeSprite)
+// {
+//     for (std::pair<PrizeType, sf::Sprite *> pair : prizesSprites)
+//     {
+//         if (prizeSprite == pair.second)
+//         {
+//             std::cout << pair.first << "\n";
+//         }
+//     }
+// }
+
+void handlePrizeCollisionWithPlatform(sf::Sprite *prizeSprite)
+{
+
+    for (std::pair<PrizeType, sf::Sprite *> pair : prizesSprites)
+    {
+        if (prizeSprite == pair.second)
+        {
+
+            std::cout << pair.first << "\n";
+        }
+    }
+}
+
+void checkPrizeCollisionWithPlatform()
+{
+    const sf::FloatRect platformBounds = platform.getGlobalBounds();
+    for (sf::Sprite *prizeSprite : activePrizes)
+    {
+        const sf::FloatRect prizeBounds = prizeSprite->getGlobalBounds();
+        if (prizeBounds.intersects(platformBounds))
+        {
+            handlePrizeCollisionWithPlatform(prizeSprite);
+        }
+    }
+}
+
+void checkPrizeMiss(float y)
+{
+    for (sf::Sprite *prizeSprite : activePrizes)
+    {
+        const sf::FloatRect prizeBounds = prizeSprite->getGlobalBounds();
+        if (y + prizeBounds.height > BOTTOM)
+        {
+            activePrizes.erase(std::remove(activePrizes.begin(), activePrizes.end(), prizeSprite), activePrizes.end());
+        }
+    }
+}
+
 void updatePrizes(float &dt)
 {
     const float prizeSpeed = 100;
@@ -720,7 +770,9 @@ void updatePrizes(float &dt)
         sf::Vector2f currPos = prizeSprite->getPosition();
         const float newYpos = currPos.y + dt * prizeSpeed;
         prizeSprite->setPosition(currPos.x, newYpos);
+        checkPrizeMiss(newYpos);
     }
+    checkPrizeCollisionWithPlatform();
 }
 
 void playGame(sf::RenderWindow &window)
