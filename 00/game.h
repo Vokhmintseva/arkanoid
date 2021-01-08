@@ -3,21 +3,17 @@
 #include <map>
 #include <vector>
 #include <algorithm>
-#include <iterator>
 
 using namespace std;
+void setPlatformSize();
 
-enum PrizeType
-{
-    expand_platform,
-    two_balls,
-    slow_ball_down,
-    accelerate_ball,
-    extra_life,
-    portal_door,
-    sticky_ball,
-    none
-};
+sf::Sprite expandPlatformSprite;
+sf::Sprite twoBallsSprite;
+sf::Sprite slowBallDownSprite;
+sf::Sprite accelerateBallSprite;
+sf::Sprite extraLifeSprite;
+sf::Sprite portalDoorSprite;
+sf::Sprite stickyBallSprite;
 
 struct Prize
 {
@@ -27,7 +23,6 @@ struct Prize
 struct Brick
 {
     sf::Sprite brickSprite;
-    //sf::Vector2f position;
     Prize prize;
 };
 
@@ -46,6 +41,11 @@ const float BALL_SIZE = 10;
 const float INITIAL_BALL_X = LEFT_EDGE + (GAME_FIELD_WIDTH - BALL_SIZE) / 2; //195
 const float INITIAL_BALL_Y = INITIAL_PLATFORM_Y - BALL_SIZE;                 //315
 const float gameFieldOutlineThickness = 5;
+float koeffOfPlatformExpansion = 1.0f;
+float koeffOfBallSpeed = 1.0f;
+const float regularBallSpeed = 100.0f;
+float prizeStartTime;
+int scores;
 
 sf::Sprite platform;
 sf::Sprite livesDesignation;
@@ -55,19 +55,12 @@ sf::Sprite highScoresSprite;
 sf::Sprite player;
 sf::Sprite background;
 sf::Sprite scoresSprite;
-sf::Sprite expandPlatform;
-sf::Sprite twoBalls;
-sf::Sprite slowBallDown;
-sf::Sprite accelerateBall;
-sf::Sprite extraLife;
-sf::Sprite portal;
-sf::Sprite stickyBall;
+
 int ballXdir;
 int ballYdir;
-int ballSpeed;
+float ballSpeed;
 bool isPaused;
 int lives;
-int scores;
 sf::Text levelLostMsgTextModal;
 sf::Text okTextModal;
 sf::Text cancelTextModal;
@@ -78,15 +71,25 @@ sf::RectangleShape levelLostModal;
 int selectedModalItem = 1;
 std::string highScoresStr;
 std::vector<sf::Sprite *> activePrizes;
+std::vector<PrizeEffect> prizeEffects;
 
 std::map<PrizeType, sf::Sprite *> prizesSprites = {
-    {expand_platform, &expandPlatform},
-    {two_balls, &twoBalls},
-    {slow_ball_down, &slowBallDown},
-    {accelerate_ball, &accelerateBall},
-    {extra_life, &extraLife},
-    {portal_door, &portal},
-    {sticky_ball, &stickyBall}};
+    {expand_platform, &expandPlatformSprite},
+    {two_balls, &twoBallsSprite},
+    {slow_ball_down, &slowBallDownSprite},
+    {accelerate_ball, &accelerateBallSprite},
+    {extra_life, &extraLifeSprite},
+    {portal_door, &portalDoorSprite},
+    {sticky_ball, &stickyBallSprite}};
+
+// std::map<PrizeType, PrizeStates> prizeGameStates = {
+//     {expand_platform, expand_platform_prize_state},
+//     {two_balls, two_balls_prize_state},
+//     {slow_ball_down, slow_ball_down_prize_state},
+//     {accelerate_ball, accelerate_ball_prize_state},
+//     {extra_life, extra_life_prize_state},
+//     {portal_door, portal_door_prize_state},
+//     {sticky_ball, sticky_ball_prize_state}};
 
 //из полярных в евклидовы координаты
 sf::Vector2f toEuclidean(float radius, float angle)
@@ -137,12 +140,13 @@ Brick createBrick(sf::Color color, sf::Vector2f position, map<int, PrizeType> pr
 
 void handlePrize(sf::FloatRect brickBounds, PrizeType prizeType)
 {
-    sf::Sprite *spritePtr = prizesSprites[prizeType];
+    sf::Sprite *spritePtr = new sf::Sprite();
+    spritePtr->setTexture(getPrizeSpriteTexture(prizeType));
     spritePtr->setPosition(brickBounds.left, brickBounds.top);
     activePrizes.push_back(spritePtr);
 }
 
-void handleCollisionWithBrick(sf::FloatRect brickBounds, sf::FloatRect ballBounds, Brick brick)
+void handleBallCollisionWithBrick(sf::FloatRect brickBounds, sf::FloatRect ballBounds, Brick brick)
 {
     scores = scores + 50;
     scoresText.setString(std::to_string(scores));
@@ -165,7 +169,7 @@ void handleCollisionWithBrick(sf::FloatRect brickBounds, sf::FloatRect ballBound
     }
 }
 
-void handleCollisionWithPlatform(sf::FloatRect platformBounds, sf::FloatRect ballBounds)
+void handleBallCollisionWithPlatform(sf::FloatRect platformBounds, sf::FloatRect ballBounds)
 {
     const float ballCenter = ballBounds.left + BALL_SIZE / 2;
     const float platformCenter = platformBounds.left + PLATFORM_WIDTH / 2;
@@ -181,8 +185,16 @@ void handleCollisionWithPlatform(sf::FloatRect platformBounds, sf::FloatRect bal
     }
 }
 
+void decreaseScores()
+{
+    scores >= 50
+        ? scores = scores - 50
+        : scores = 0;
+}
+
 void handleBallMiss()
 {
+    decreaseScores();
     lives--;
     if (lives < 1)
     {
@@ -191,10 +203,12 @@ void handleBallMiss()
     else
     {
         resetPlatform();
+        setPlatformSize();
         resetBall();
         isPaused = true;
         ballXdir = 1;
         ballYdir = -1;
+        ballSpeed = 100;
     }
 }
 
@@ -206,7 +220,7 @@ void checkBallColiisionWithBrick(const sf::FloatRect &ballBounds, std::vector<Br
         const sf::FloatRect brickBounds = brick.getGlobalBounds();
         if (ballBounds.intersects(brickBounds))
         {
-            handleCollisionWithBrick(brickBounds, ballBounds, bricks[i]);
+            handleBallCollisionWithBrick(brickBounds, ballBounds, bricks[i]);
             bricks.erase(bricks.begin() + i);
         }
     }
@@ -217,7 +231,7 @@ void checkBallColiisionWithPlatform(const sf::FloatRect &ballBounds)
     const sf::FloatRect platformBounds = platform.getGlobalBounds();
     if (ballBounds.intersects(platformBounds))
     {
-        handleCollisionWithPlatform(platformBounds, ballBounds);
+        handleBallCollisionWithPlatform(platformBounds, ballBounds);
     }
 }
 
@@ -242,7 +256,7 @@ void checkBallColiisionWithEdges(const sf::FloatRect &ballBounds, sf::Vector2f &
     }
 }
 
-void updateBall(int &ballSpeed, float &dt, std::vector<Brick> &bricks)
+void updateBall(float &ballSpeed, float &dt, std::vector<Brick> &bricks)
 {
     if (isPaused || gameState != playing)
         return;
@@ -445,7 +459,7 @@ int getRandomNumber(int min, int max)
     return rand() % (max + 1);
 }
 
-int changeIndex(int index, const int bricksNumber)
+int changeBrickIndex(int index, const int bricksNumber)
 {
     index = index + 1;
     if (index > bricksNumber - 1)
@@ -463,12 +477,12 @@ vector<int> definePrizesBricksIndexes(const int bricksNumber, const int numberOf
     {
         int index = getRandomNumber(0, bricksNumber - 1);
         while (std::find(prizeBricksIndexes.begin(), prizeBricksIndexes.end(), index) != prizeBricksIndexes.end())
-            index = changeIndex(index, bricksNumber);
+            index = changeBrickIndex(index, bricksNumber);
         prizeBricksIndexes.push_back(index);
         //std::cout << index << "\t";
     }
     //std::cout << std::endl;
-    prizeBricksIndexes = {27, 28, 29};
+    prizeBricksIndexes = {24, 25, 26, 27, 28, 29};
     return prizeBricksIndexes;
 }
 
@@ -480,12 +494,15 @@ int getBrickIndex(int row, int column, const int columnsTotal)
 std::vector<Brick> createBricksVector_1level(sf::Vector2f startPosition)
 {
     const int bricksNumber = 30;
-    const int bricksWithPrizesNum = 3;
+    const int bricksWithPrizesNum = 6;
     vector<int> prizeBricksIndexes = definePrizesBricksIndexes(bricksNumber, bricksWithPrizesNum);
     map<int, PrizeType> prizesAssignment = {
-        {prizeBricksIndexes[0], expand_platform},
+        {prizeBricksIndexes[0], slow_ball_down},
         {prizeBricksIndexes[1], slow_ball_down},
-        {prizeBricksIndexes[2], accelerate_ball}};
+        {prizeBricksIndexes[2], slow_ball_down},
+        {prizeBricksIndexes[3], slow_ball_down},
+        {prizeBricksIndexes[4], slow_ball_down},
+        {prizeBricksIndexes[5], slow_ball_down}};
     brick.setTexture(getBrickTexture());
     std::vector<Brick> bricks;
     float xStart = startPosition.x;
@@ -530,13 +547,18 @@ void setTimeToShowFailMsg(float &dt, float &timeToShowFailMsg)
     }
 }
 
-void adjustPlatform()
+void setPlatformSize()
 {
-    platform.setTexture(getPlatformTexture());
     sf::Vector2f platformSize(PLATFORM_WIDTH, PLATFORM_HEIGHT);
     platform.setScale(
         platformSize.x / platform.getLocalBounds().width,
         platformSize.y / platform.getLocalBounds().height);
+}
+
+void adjustPlatform()
+{
+    platform.setTexture(getPlatformTexture());
+    setPlatformSize();
     resetPlatform();
 }
 
@@ -548,7 +570,7 @@ void adjustBall()
         BALL_SIZE / ball.getLocalBounds().height);
     ballXdir = 1;
     ballYdir = -1;
-    ballSpeed = 100;
+    ballSpeed = 100.0f;
     resetBall();
 }
 
@@ -627,11 +649,12 @@ void adjustGameLostModal()
 void resetGlobalVars()
 {
     isPaused = true;
-    lives = 1;
+    lives = 2;
     int selectedModalItem = 1;
     gameState = playing;
-    scores = 0;
     highScoresStr = "";
+    prizeStartTime = 0;
+    scores = 0;
 }
 
 void getBestScores()
@@ -704,40 +727,112 @@ void handleScores()
 
 void loadPrizesTextures()
 {
-    expandPlatform.setTexture(getExpandPlatformTexture());
-    twoBalls.setTexture(getTwoBallsTexture());
-    slowBallDown.setTexture(getSlowBallDownTexture());
-    accelerateBall.setTexture(getAccelerateBallTexture());
-    extraLife.setTexture(getExtraLifeTexture());
-    portal.setTexture(getPortalDoorTexture());
-    stickyBall.setTexture(getStickyBallTexture());
+    expandPlatformSprite.setTexture(getExpandPlatformTexture());
+    twoBallsSprite.setTexture(getTwoBallsTexture());
+    slowBallDownSprite.setTexture(getSlowBallDownTexture());
+    accelerateBallSprite.setTexture(getAccelerateBallTexture());
+    extraLifeSprite.setTexture(getExtraLifeTexture());
+    portalDoorSprite.setTexture(getPortalDoorTexture());
+    stickyBallSprite.setTexture(getStickyBallTexture());
 }
 
-// void detectPrizeType(sf::Sprite *prizeSprite)
-// {
-//     for (std::pair<PrizeType, sf::Sprite *> pair : prizesSprites)
-//     {
-//         if (prizeSprite == pair.second)
-//         {
-//             std::cout << pair.first << "\n";
-//         }
-//     }
-// }
-
-void handlePrizeCollisionWithPlatform(sf::Sprite *prizeSprite)
+void changePlatformSize(float koeff)
 {
+    sf::Vector2f platformSize(PLATFORM_WIDTH * koeff, PLATFORM_HEIGHT);
+    platform.setScale(
+        platformSize.x / platform.getLocalBounds().width,
+        platformSize.y / platform.getLocalBounds().height);
+}
 
-    for (std::pair<PrizeType, sf::Sprite *> pair : prizesSprites)
+void changeBallSpeed(float koeff)
+{
+    ballSpeed = regularBallSpeed * koeff;
+}
+
+void twoBalls()
+{
+}
+
+void extraLife()
+{
+}
+
+void portalDoor()
+{
+}
+
+void stickyBall()
+{
+}
+
+void applyPrizeEffect(PrizeType prizeType)
+{
+    switch (prizeType)
     {
-        if (prizeSprite == pair.second)
+    case expand_platform:
+        koeffOfPlatformExpansion += 0.35;
+        if (koeffOfPlatformExpansion < 2)
+            changePlatformSize(koeffOfPlatformExpansion);
+        break;
+    case accelerate_ball:
+        koeffOfBallSpeed += 0.35;
+        if (koeffOfBallSpeed < 2)
+            changeBallSpeed(koeffOfBallSpeed);
+        break;
+    case slow_ball_down:
+        koeffOfBallSpeed -= 0.35;
+        if (koeffOfBallSpeed > 0)
         {
-
-            std::cout << pair.first << "\n";
+            cout << "apply slow down ball speed calling" << endl;
+            changeBallSpeed(koeffOfBallSpeed);
         }
+        break;
+    case two_balls:
+        twoBalls();
+        break;
+    case extra_life:
+        extraLife();
+        break;
+    case portal_door:
+        portalDoor();
+        break;
+    case sticky_ball:
+        stickyBall();
+        break;
     }
 }
 
-void checkPrizeCollisionWithPlatform()
+PrizeType getPrizeType(sf::Sprite *prizeSprite)
+{
+    const sf::Texture *prizeTexture = prizeSprite->getTexture();
+    return getPrizeType(prizeTexture);
+}
+
+void deletePtr(sf::Sprite *prizeSprite)
+{
+    prizeSprite = NULL;
+    delete prizeSprite;
+}
+
+void deletePrizeFromActivePrizes(sf::Sprite *prizeSprite)
+{
+    activePrizes.erase(std::remove(activePrizes.begin(), activePrizes.end(), prizeSprite), activePrizes.end());
+    deletePtr(prizeSprite);
+}
+
+void handlePrizeCollisionWithPlatform(sf::Sprite *prizeSprite, float &dt)
+{
+    prizeStartTime = dt;
+    PrizeType prizeType = getPrizeType(prizeSprite);
+    applyPrizeEffect(prizeType);
+    deletePrizeFromActivePrizes(prizeSprite);
+    PrizeEffect effect;
+    effect.prizeEffectType = getPrizeType(prizeSprite);
+    effect.timeOfEffectApplying = 0;
+    prizeEffects.push_back(effect);
+}
+
+void checkPrizeCollisionWithPlatform(float &dt)
 {
     const sf::FloatRect platformBounds = platform.getGlobalBounds();
     for (sf::Sprite *prizeSprite : activePrizes)
@@ -745,34 +840,111 @@ void checkPrizeCollisionWithPlatform()
         const sf::FloatRect prizeBounds = prizeSprite->getGlobalBounds();
         if (prizeBounds.intersects(platformBounds))
         {
-            handlePrizeCollisionWithPlatform(prizeSprite);
+            handlePrizeCollisionWithPlatform(prizeSprite, dt);
         }
     }
 }
 
-void checkPrizeMiss(float y)
+void checkPrizeMiss()
 {
     for (sf::Sprite *prizeSprite : activePrizes)
     {
         const sf::FloatRect prizeBounds = prizeSprite->getGlobalBounds();
-        if (y + prizeBounds.height > BOTTOM)
-        {
-            activePrizes.erase(std::remove(activePrizes.begin(), activePrizes.end(), prizeSprite), activePrizes.end());
-        }
+        const sf::Vector2f currPrizeSpritePos = prizeSprite->getPosition();
+        if (currPrizeSpritePos.y + prizeBounds.height > BOTTOM)
+            deletePrizeFromActivePrizes(prizeSprite);
     }
 }
 
 void updatePrizes(float &dt)
 {
-    const float prizeSpeed = 100;
+    const float prizeSpeed = 10;
     for (sf::Sprite *prizeSprite : activePrizes)
     {
         sf::Vector2f currPos = prizeSprite->getPosition();
         const float newYpos = currPos.y + dt * prizeSpeed;
         prizeSprite->setPosition(currPos.x, newYpos);
-        checkPrizeMiss(newYpos);
     }
-    checkPrizeCollisionWithPlatform();
+    checkPrizeCollisionWithPlatform(dt);
+    checkPrizeMiss();
+}
+
+void closePortalDoor()
+{
+}
+
+void nonStickyBall()
+{
+}
+
+void undoEffect(PrizeType prizeType)
+{
+    switch (prizeType)
+    {
+    case expand_platform:
+        koeffOfPlatformExpansion -= 0.35;
+        if (koeffOfPlatformExpansion > 0)
+            changePlatformSize(koeffOfPlatformExpansion);
+        break;
+    case accelerate_ball:
+        koeffOfBallSpeed -= 0.35;
+        if (koeffOfBallSpeed > 0)
+            changeBallSpeed(koeffOfBallSpeed);
+        break;
+    case slow_ball_down:
+        koeffOfBallSpeed += 0.35;
+        if (koeffOfBallSpeed < 2)
+        {
+            cout << "undo slow down ball speed calling" << endl;
+            changeBallSpeed(koeffOfBallSpeed);
+        }
+        break;
+    // case two_balls_prize_state:
+    //     twoBalls();
+    //     break;
+    // case extra_life_prize_state:
+    //     extraLife();
+    //     break;
+    case portal_door:
+        closePortalDoor();
+        break;
+    case sticky_ball:
+        nonStickyBall();
+        break;
+    }
+}
+
+void updatePrizeEffects(float &dt)
+{
+    //cout << prizeEffects.size() << endl;
+    for (int i = 0; i < prizeEffects.size(); i++)
+    {
+        const float effectTime = prizeEffects[i].timeOfEffectApplying;
+        const float newEffectTime = effectTime + dt;
+        //cout << "reg time of prize" << newEffectTime << endl;
+        prizeEffects[i].timeOfEffectApplying = newEffectTime;
+
+        if (prizeEffects[i].timeOfEffectApplying > regularTimeOfPrizeEffect)
+        {
+            //cout << "erasing prize effect";
+            undoEffect(prizeEffects[i].prizeEffectType);
+            prizeEffects.erase(prizeEffects.begin() + i);
+        }
+    }
+
+    // if (effect.timeOfEffectApplying > regularTimeOfPrizeEffect)
+    // {
+    //     undoEffect(effect.prizeEffectType);
+    //     prizeEffects.erase(std::remove(prizeEffects.begin(), prizeEffects.end(), effect), prizeEffects.end());
+    //     break;
+    // }
+}
+
+bool shouldLeaveGame()
+{
+    return (gameState == quit ||
+            gameState == menu_screen ||
+            gameState == start_game);
 }
 
 void playGame(sf::RenderWindow &window)
@@ -794,11 +966,9 @@ void playGame(sf::RenderWindow &window)
         pollEvents(window, dt);
         updateBall(ballSpeed, dt, bricks);
         updatePrizes(dt);
+        updatePrizeEffects(dt);
         redrawFrame(window, bricks, gameField);
-        if (
-            gameState == quit ||
-            gameState == menu_screen ||
-            gameState == start_game)
+        if (shouldLeaveGame())
         {
             handleScores();
             return;

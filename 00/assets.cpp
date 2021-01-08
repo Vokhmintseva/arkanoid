@@ -18,6 +18,38 @@ sf::Texture stickyBallTexture;
 
 sf::Font font;
 
+enum PrizeType
+{
+    expand_platform,
+    two_balls,
+    slow_ball_down,
+    accelerate_ball,
+    extra_life,
+    portal_door,
+    sticky_ball,
+    none
+};
+
+// enum PrizeStates
+// {
+//     expand_platform_prize_state,
+//     two_balls_prize_state,
+//     slow_ball_down_prize_state,
+//     accelerate_ball_prize_state,
+//     extra_life_prize_state,
+//     portal_door_prize_state,
+//     sticky_ball_prize_state,
+//     none_prize_state
+// };
+
+struct PrizeEffect
+{
+    PrizeType prizeEffectType;
+    float timeOfEffectApplying;
+};
+
+const float regularTimeOfPrizeEffect = 10;
+
 void loadAssets()
 {
     platformTexture.loadFromFile("00/images/platform.png");
@@ -129,4 +161,43 @@ sf::Texture &getStickyBallTexture()
 sf::Font &getFont()
 {
     return font;
+}
+
+sf::Texture &getPrizeSpriteTexture(PrizeType prizeType)
+{
+    switch (prizeType)
+    {
+    case expand_platform:
+        return expandPlatformTexture;
+    case two_balls:
+        return twoBallsTexture;
+    case slow_ball_down:
+        return slowBallDownTexture;
+    case accelerate_ball:
+        return accelerateBallTexture;
+    case extra_life:
+        return extraLifeTexture;
+    case portal_door:
+        return portalDoorTexture;
+    case sticky_ball:
+        return stickyBallTexture;
+    }
+}
+
+PrizeType getPrizeType(const sf::Texture *texture)
+{
+    if (texture == &expandPlatformTexture)
+        return expand_platform;
+    if (texture == &twoBallsTexture)
+        return two_balls;
+    if (texture == &slowBallDownTexture)
+        return slow_ball_down;
+    if (texture == &accelerateBallTexture)
+        return accelerate_ball;
+    if (texture == &extraLifeTexture)
+        return extra_life;
+    if (texture == &portalDoorTexture)
+        return portal_door;
+    if (texture == &stickyBallTexture)
+        return sticky_ball;
 }
