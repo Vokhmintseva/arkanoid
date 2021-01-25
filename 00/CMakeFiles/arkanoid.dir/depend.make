@@ -79,6 +79,7 @@
 00/CMakeFiles/arkanoid.dir/main.cpp.obj: 00/inputName.h
 00/CMakeFiles/arkanoid.dir/main.cpp.obj: 00/main.cpp
 00/CMakeFiles/arkanoid.dir/main.cpp.obj: 00/menu.h
+00/CMakeFiles/arkanoid.dir/main.cpp.obj: 00/scores.cpp
 00/CMakeFiles/arkanoid.dir/main.cpp.obj: 00/splashScreen.h
 00/CMakeFiles/arkanoid.dir/main.cpp.obj: 00/store.cpp
 

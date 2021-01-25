@@ -653,10 +653,16 @@ vector
 -
 algorithm
 -
+cmath
+-
+scores.cpp
+C:/OsnProjDe/arkanoid/00/scores.cpp
 
 C:/OsnProjDe/arkanoid/00/globalVars.cpp
 
 C:/OsnProjDe/arkanoid/00/highScores.cpp
+list
+-
 
 C:/OsnProjDe/arkanoid/00/inputName.h
 string
@@ -665,28 +671,18 @@ string
 C:/OsnProjDe/arkanoid/00/main.cpp
 SFML/Graphics.hpp
 -
-cmath
--
 fstream
 -
 iostream
 -
-list
--
 SFML/Window.hpp
 -
-vector
--
-conio.h
--
-string
--
-assets.cpp
-C:/OsnProjDe/arkanoid/00/assets.cpp
 store.cpp
 C:/OsnProjDe/arkanoid/00/store.cpp
 globalVars.cpp
 C:/OsnProjDe/arkanoid/00/globalVars.cpp
+assets.cpp
+C:/OsnProjDe/arkanoid/00/assets.cpp
 highScores.cpp
 C:/OsnProjDe/arkanoid/00/highScores.cpp
 game.h
@@ -699,6 +695,8 @@ inputName.h
 C:/OsnProjDe/arkanoid/00/inputName.h
 
 C:/OsnProjDe/arkanoid/00/menu.h
+
+C:/OsnProjDe/arkanoid/00/scores.cpp
 
 C:/OsnProjDe/arkanoid/00/splashScreen.h
 

@@ -10,7 +10,46 @@ enum states
     high_scores
 };
 
-states gameState = menu_screen;
-//PrizeStates prizeGameState = none_prize_state;
+enum PrizeType
+{
+    expand_platform,
+    two_balls,
+    slow_ball_down,
+    accelerate_ball,
+    extra_life,
+    portal_door,
+    sticky_ball,
+    none
+};
 
-int level = 1;
+enum BrickKind
+{
+    Usual_brick,
+    Ruby,
+    Sapphire,
+    Emerald
+};
+
+struct Player
+{
+    int scores;
+    std::string name;
+};
+
+struct Prize
+{
+    PrizeType prizeType;
+    sf::Sprite *prizeSprite;
+};
+
+struct Brick
+{
+    sf::Sprite brickSprite;
+    Prize prize;
+};
+
+struct PrizeEffect
+{
+    PrizeType prizeEffectType;
+    float timeOfEffectApplying;
+};

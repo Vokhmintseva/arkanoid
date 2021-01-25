@@ -3,6 +3,8 @@
 #include <map>
 #include <vector>
 #include <algorithm>
+#include <cmath>
+#include "scores.cpp"
 
 using namespace std;
 void setPlatformSize();
@@ -14,17 +16,6 @@ sf::Sprite accelerateBallSprite;
 sf::Sprite extraLifeSprite;
 sf::Sprite portalDoorSprite;
 sf::Sprite stickyBallSprite;
-
-struct Prize
-{
-    PrizeType prizeType;
-    sf::Sprite *prizeSprite;
-};
-struct Brick
-{
-    sf::Sprite brickSprite;
-    Prize prize;
-};
 
 const sf::Vector2f gameFieldPosition = sf::Vector2f(50, 50);
 const float GAME_FIELD_WIDTH = 300;
@@ -45,7 +36,6 @@ float koeffOfPlatformExpansion = 1.0f;
 float koeffOfBallSpeed = 1.0f;
 const float regularBallSpeed = 100.0f;
 float prizeStartTime;
-int scores;
 
 sf::Sprite platform;
 sf::Sprite livesDesignation;
@@ -82,22 +72,65 @@ std::map<PrizeType, sf::Sprite *> prizesSprites = {
     {portal_door, &portalDoorSprite},
     {sticky_ball, &stickyBallSprite}};
 
-// std::map<PrizeType, PrizeStates> prizeGameStates = {
-//     {expand_platform, expand_platform_prize_state},
-//     {two_balls, two_balls_prize_state},
-//     {slow_ball_down, slow_ball_down_prize_state},
-//     {accelerate_ball, accelerate_ball_prize_state},
-//     {extra_life, extra_life_prize_state},
-//     {portal_door, portal_door_prize_state},
-//     {sticky_ball, sticky_ball_prize_state}};
-
-//из полярных в евклидовы координаты
 sf::Vector2f toEuclidean(float radius, float angle)
 {
     return {
         radius * std::cos(angle),
         radius * std::sin(angle)};
 }
+
+// bool comparePlayers(const Player &a, const Player &b)
+// {
+//     return a.scores >= b.scores;
+// }
+
+// void readHighScores(std::list<Player> &bestScores)
+// {
+//     std::ifstream fileout("HighScores.txt"); // окрываем файл для чтения
+//     if (fileout.is_open())
+//     {
+//         std::string line;
+//         while (getline(fileout, line))
+//         {
+//             if (line.empty())
+//                 break;
+//             size_t i = line.find(' ');
+//             std::string scoreStr = line.substr(0, i);
+//             int score = std::stoi(scoreStr);
+//             std::string name = line.substr(i + 1, line.length());
+//             bestScores.push_back({score, name});
+//         }
+//     }
+//     fileout.close();
+// }
+
+// void writeHighScores(std::list<Player> &bestScores)
+// {
+//     int numberOfRecords = 5;
+//     std::ofstream filein;          // поток для записи
+//     filein.open("HighScores.txt"); // окрываем файл для записи
+//     bestScores.sort(comparePlayers);
+//     for (Player player : bestScores)
+//     {
+//         filein << player.scores << " " << player.name << endl;
+//         numberOfRecords--;
+//         if (numberOfRecords < 1)
+//             break;
+//     }
+//     filein.close();
+// }
+
+// void handleScores()
+// {
+//     std::list<Player> bestScores;
+//     if (scores != 0)
+//     {
+//         Player currPlayer = {scores, playerName};
+//         bestScores.push_front(currPlayer);
+//     }
+//     readHighScores(bestScores);
+//     writeHighScores(bestScores);
+// }
 
 //из радиан в градусы
 float toDegrees(float radians)
@@ -195,10 +228,13 @@ void decreaseScores()
 void handleBallMiss()
 {
     decreaseScores();
+    prizeEffects.clear();
+    activePrizes.clear();
     lives--;
     if (lives < 1)
     {
         gameState = level_lost_modal;
+        handleScores();
     }
     else
     {
@@ -222,6 +258,11 @@ void checkBallColiisionWithBrick(const sf::FloatRect &ballBounds, std::vector<Br
         {
             handleBallCollisionWithBrick(brickBounds, ballBounds, bricks[i]);
             bricks.erase(bricks.begin() + i);
+            if (bricks.empty())
+            {
+                level += 1;
+                gameState = start_game;
+            }
         }
     }
 }
@@ -325,6 +366,7 @@ void handleRightKeyPressed(sf::Keyboard::Key &key, float &dt)
 
 void handleReturnKeyReleased()
 {
+    scores = 0;
     if (gameState == level_lost_modal)
     {
         switch (selectedModalItem)
@@ -378,6 +420,7 @@ void pollEvents(sf::RenderWindow &window, float &dt)
         switch (event.type)
         {
         case sf::Event::Closed:
+            handleScores();
             gameState = quit;
             return;
         case sf::Event::KeyReleased:
@@ -482,7 +525,7 @@ vector<int> definePrizesBricksIndexes(const int bricksNumber, const int numberOf
         //std::cout << index << "\t";
     }
     //std::cout << std::endl;
-    prizeBricksIndexes = {24, 25, 26, 27, 28, 29};
+    prizeBricksIndexes = {18, 19, 20};
     return prizeBricksIndexes;
 }
 
@@ -493,17 +536,16 @@ int getBrickIndex(int row, int column, const int columnsTotal)
 
 std::vector<Brick> createBricksVector_1level(sf::Vector2f startPosition)
 {
+    //BrickKind brickKind = Usual_brick;
     const int bricksNumber = 30;
     const int bricksWithPrizesNum = 6;
     vector<int> prizeBricksIndexes = definePrizesBricksIndexes(bricksNumber, bricksWithPrizesNum);
     map<int, PrizeType> prizesAssignment = {
         {prizeBricksIndexes[0], slow_ball_down},
-        {prizeBricksIndexes[1], slow_ball_down},
-        {prizeBricksIndexes[2], slow_ball_down},
-        {prizeBricksIndexes[3], slow_ball_down},
-        {prizeBricksIndexes[4], slow_ball_down},
-        {prizeBricksIndexes[5], slow_ball_down}};
-    brick.setTexture(getBrickTexture());
+        {prizeBricksIndexes[1], accelerate_ball},
+        {prizeBricksIndexes[2], expand_platform},
+    };
+    brick.setTexture(getSapphireTexture());
     std::vector<Brick> bricks;
     float xStart = startPosition.x;
     float yStart = startPosition.y;
@@ -520,10 +562,77 @@ std::vector<Brick> createBricksVector_1level(sf::Vector2f startPosition)
         xStart = startPosition.x;
         yStart = yStart + 25;
     }
-    // for (int i = 0; i < bricksNumber; i++)
-    // {
-    //     cout << bricks[i].prize << "\t";
-    // }
+    return bricks;
+}
+
+std::vector<Brick> createBricksVector_2level(sf::Vector2f startPosition)
+{
+    const int bricksNumber = 21;
+    const int bricksWithPrizesNum = 2;
+    const int rowBricksNumber = 6;
+    vector<int> prizeBricksIndexes = definePrizesBricksIndexes(bricksNumber, bricksWithPrizesNum);
+    std::vector<Brick> bricks;
+    //map<случайный индекс, тип приза> prizesAssignment
+    map<int, PrizeType> prizesAssignment = {
+        {prizeBricksIndexes[0], slow_ball_down},
+        {prizeBricksIndexes[1], accelerate_ball},
+        {prizeBricksIndexes[2], expand_platform},
+    };
+    brick.setTexture(getRubyTexture(), true);
+    float xStart = startPosition.x;
+    float yStart = startPosition.y;
+    int index = 0;
+    for (int i = 0; i < rowBricksNumber; i++)
+    {
+        bricks.push_back(createBrick(sf::Color(236, 80, 215), {x : xStart, y : yStart}, prizesAssignment, index));
+        index += 1;
+        xStart = xStart + 45;
+    }
+    yStart += 30;
+    xStart = startPosition.x + 20;
+    brick.setTexture(getSapphireTexture(), true);
+    for (int i = 0; i < rowBricksNumber - 1; i++)
+    {
+        bricks.push_back(createBrick(sf::Color(0, 255, 255), {x : xStart, y : yStart}, prizesAssignment, index));
+        index += 1;
+        xStart = xStart + 45;
+    }
+    yStart += 40;
+    xStart = startPosition.x + 40;
+    brick.setTexture(getRubyTexture(), true);
+    for (int i = 0; i < rowBricksNumber - 2; i++)
+    {
+        bricks.push_back(createBrick(sf::Color(0, 255, 0), {x : xStart, y : yStart}, prizesAssignment, index));
+        index += 1;
+        xStart = xStart + 45;
+    }
+    yStart += 30;
+    xStart = startPosition.x + 65;
+    brick.setTexture(getSapphireTexture(), true);
+    for (int i = 0; i < rowBricksNumber - 3; i++)
+    {
+        bricks.push_back(createBrick(sf::Color(183, 130, 210), {x : xStart, y : yStart}, prizesAssignment, index));
+        index += 1;
+        xStart = xStart + 45;
+    }
+    yStart += 40;
+    xStart = startPosition.x + 90;
+    brick.setTexture(getRubyTexture(), true);
+    for (int i = 0; i < rowBricksNumber - 4; i++)
+    {
+        bricks.push_back(createBrick(sf::Color(200, 220, 40), {x : xStart, y : yStart}, prizesAssignment, index));
+        index += 1;
+        xStart = xStart + 45;
+    }
+    yStart += 30;
+    xStart = startPosition.x + 112;
+    brick.setTexture(getSapphireTexture(), true);
+    for (int i = 0; i < rowBricksNumber - 5; i++)
+    {
+        bricks.push_back(createBrick(sf::Color(0, 255, 255), {x : xStart, y : yStart}, prizesAssignment, index));
+        index += 1;
+        xStart = xStart + 45;
+    }
     return bricks;
 }
 
@@ -653,13 +762,14 @@ void resetGlobalVars()
     int selectedModalItem = 1;
     gameState = playing;
     highScoresStr = "";
-    prizeStartTime = 0;
-    scores = 0;
+    //prizeStartTime = 0;
+    prizeEffects.clear();
+    activePrizes.clear();
 }
 
 void getBestScores()
 {
-    std::ifstream fileout("HighScores.txt"); // окрываем файл для чтения
+    std::ifstream fileout("HighScores.txt");
     if (fileout.is_open())
     {
         std::string line;
@@ -670,59 +780,6 @@ void getBestScores()
         }
     }
     fileout.close();
-}
-
-bool comparePlayers(const Player &a, const Player &b)
-{
-    return a.scores >= b.scores;
-}
-
-void readHighScores(std::list<Player> &bestScores)
-{
-    std::ifstream fileout("HighScores.txt"); // окрываем файл для чтения
-    if (fileout.is_open())
-    {
-        std::string line;
-        while (getline(fileout, line))
-        {
-            if (line.empty())
-                break;
-            size_t i = line.find(' ');
-            std::string scoreStr = line.substr(0, i);
-            int score = std::stoi(scoreStr);
-            std::string name = line.substr(i + 1, line.length());
-            bestScores.push_back({score, name});
-        }
-    }
-    fileout.close();
-}
-
-void writeHighScores(std::list<Player> &bestScores)
-{
-    int numberOfRecords = 5;
-    std::ofstream filein;          // поток для записи
-    filein.open("HighScores.txt"); // окрываем файл для записи
-    bestScores.sort(comparePlayers);
-    for (Player player : bestScores)
-    {
-        filein << player.scores << " " << player.name << endl;
-        numberOfRecords--;
-        if (numberOfRecords < 1)
-            break;
-    }
-    filein.close();
-}
-
-void handleScores()
-{
-    std::list<Player> bestScores;
-    if (scores != 0)
-    {
-        Player currPlayer = {scores, playerName};
-        bestScores.push_front(currPlayer);
-    }
-    readHighScores(bestScores);
-    writeHighScores(bestScores);
 }
 
 void loadPrizesTextures()
@@ -782,10 +839,7 @@ void applyPrizeEffect(PrizeType prizeType)
     case slow_ball_down:
         koeffOfBallSpeed -= 0.35;
         if (koeffOfBallSpeed > 0)
-        {
-            cout << "apply slow down ball speed calling" << endl;
             changeBallSpeed(koeffOfBallSpeed);
-        }
         break;
     case two_balls:
         twoBalls();
@@ -856,8 +910,10 @@ void checkPrizeMiss()
     }
 }
 
-void updatePrizes(float &dt)
+void updateFallingPrizes(float &dt)
 {
+    if (isPaused || gameState != playing)
+        return;
     const float prizeSpeed = 10;
     for (sf::Sprite *prizeSprite : activePrizes)
     {
@@ -894,10 +950,7 @@ void undoEffect(PrizeType prizeType)
     case slow_ball_down:
         koeffOfBallSpeed += 0.35;
         if (koeffOfBallSpeed < 2)
-        {
-            cout << "undo slow down ball speed calling" << endl;
             changeBallSpeed(koeffOfBallSpeed);
-        }
         break;
     // case two_balls_prize_state:
     //     twoBalls();
@@ -916,28 +969,20 @@ void undoEffect(PrizeType prizeType)
 
 void updatePrizeEffects(float &dt)
 {
-    //cout << prizeEffects.size() << endl;
+    if (isPaused || gameState != playing)
+        return;
     for (int i = 0; i < prizeEffects.size(); i++)
     {
         const float effectTime = prizeEffects[i].timeOfEffectApplying;
         const float newEffectTime = effectTime + dt;
-        //cout << "reg time of prize" << newEffectTime << endl;
         prizeEffects[i].timeOfEffectApplying = newEffectTime;
 
         if (prizeEffects[i].timeOfEffectApplying > regularTimeOfPrizeEffect)
         {
-            //cout << "erasing prize effect";
             undoEffect(prizeEffects[i].prizeEffectType);
             prizeEffects.erase(prizeEffects.begin() + i);
         }
     }
-
-    // if (effect.timeOfEffectApplying > regularTimeOfPrizeEffect)
-    // {
-    //     undoEffect(effect.prizeEffectType);
-    //     prizeEffects.erase(std::remove(prizeEffects.begin(), prizeEffects.end(), effect), prizeEffects.end());
-    //     break;
-    // }
 }
 
 bool shouldLeaveGame()
@@ -957,7 +1002,16 @@ void playGame(sf::RenderWindow &window)
     adjustGameLostModal();
     adjustSidebar();
     loadPrizesTextures();
-    std::vector<Brick> bricks = createBricksVector_1level({x : 65, y : 60});
+    std::vector<Brick> bricks;
+    switch (level)
+    {
+    case 1:
+        bricks = createBricksVector_2level({x : 70, y : 65});
+        break;
+    case 2:
+        //bricks = createBricksVector_1level({x : 65, y : 60});
+        break;
+    }
     sf::RectangleShape gameField = createGameField();
     sf::Clock clock;
     while (window.isOpen())
@@ -965,12 +1019,11 @@ void playGame(sf::RenderWindow &window)
         float dt = clock.restart().asSeconds();
         pollEvents(window, dt);
         updateBall(ballSpeed, dt, bricks);
-        updatePrizes(dt);
-        updatePrizeEffects(dt);
+        updateFallingPrizes(dt);
+        updatePrizeEffects(dt); //обновить время действия эффектов от призов
         redrawFrame(window, bricks, gameField);
         if (shouldLeaveGame())
         {
-            handleScores();
             return;
         }
     }

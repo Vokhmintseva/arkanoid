@@ -15,40 +15,9 @@ sf::Texture accelerateBallTexture;
 sf::Texture extraLifeTexture;
 sf::Texture portalDoorTexture;
 sf::Texture stickyBallTexture;
-
+sf::Texture sapphireTexture;
+sf::Texture rubyTexture;
 sf::Font font;
-
-enum PrizeType
-{
-    expand_platform,
-    two_balls,
-    slow_ball_down,
-    accelerate_ball,
-    extra_life,
-    portal_door,
-    sticky_ball,
-    none
-};
-
-// enum PrizeStates
-// {
-//     expand_platform_prize_state,
-//     two_balls_prize_state,
-//     slow_ball_down_prize_state,
-//     accelerate_ball_prize_state,
-//     extra_life_prize_state,
-//     portal_door_prize_state,
-//     sticky_ball_prize_state,
-//     none_prize_state
-// };
-
-struct PrizeEffect
-{
-    PrizeType prizeEffectType;
-    float timeOfEffectApplying;
-};
-
-const float regularTimeOfPrizeEffect = 10;
 
 void loadAssets()
 {
@@ -69,6 +38,9 @@ void loadAssets()
     extraLifeTexture.loadFromFile("00/images/heart.png");
     portalDoorTexture.loadFromFile("00/images/door.png");
     stickyBallTexture.loadFromFile("00/images/duct-tape.png");
+    sapphireTexture.loadFromFile("00/images/sapphire.png");
+    //emeraldTexture.loadFromFile("00/images/emerald.png");
+    rubyTexture.loadFromFile("00/images/ruby.png");
 
     font.loadFromFile("00/perfectDOSVGA437.ttf");
 }
@@ -156,6 +128,16 @@ sf::Texture &getPortalDoorTexture()
 sf::Texture &getStickyBallTexture()
 {
     return stickyBallTexture;
+}
+
+sf::Texture &getSapphireTexture()
+{
+    return sapphireTexture;
+}
+
+sf::Texture &getRubyTexture()
+{
+    return rubyTexture;
 }
 
 sf::Font &getFont()

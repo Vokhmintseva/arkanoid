@@ -1,3 +1,5 @@
+#include <list>
+
 void highScoresPollEvents(sf::RenderWindow &window, bool &hover, sf::RectangleShape &returnButton)
 {
     sf::Event event;
