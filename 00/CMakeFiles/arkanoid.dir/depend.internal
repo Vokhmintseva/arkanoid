@@ -74,10 +74,12 @@
  C:/CppDistro/MinGW/include/SFML/Window/WindowHandle.hpp
  C:/CppDistro/MinGW/include/SFML/Window/WindowStyle.hpp
  C:/OsnProjDe/arkanoid/00/assets.cpp
+ C:/OsnProjDe/arkanoid/00/calculations.cpp
  C:/OsnProjDe/arkanoid/00/game.h
  C:/OsnProjDe/arkanoid/00/globalVars.cpp
  C:/OsnProjDe/arkanoid/00/highScores.cpp
  C:/OsnProjDe/arkanoid/00/inputName.h
+ C:/OsnProjDe/arkanoid/00/levels.cpp
  C:/OsnProjDe/arkanoid/00/main.cpp
  C:/OsnProjDe/arkanoid/00/menu.h
  C:/OsnProjDe/arkanoid/00/scores.cpp

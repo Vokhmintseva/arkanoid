@@ -52,3 +52,25 @@ void handleScores()
     readHighScores(bestScores);
     writeHighScores(bestScores);
 }
+
+void decreaseScores()
+{
+    scores >= 50
+        ? scores = scores - 50
+        : scores = 0;
+}
+
+void getBestScores()
+{
+    std::ifstream fileout("HighScores.txt");
+    if (fileout.is_open())
+    {
+        std::string line;
+        if (getline(fileout, line))
+        {
+            size_t i = line.find(' ');
+            highScoresStr = line.substr(0, i);
+        }
+    }
+    fileout.close();
+}

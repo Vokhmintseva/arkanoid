@@ -1,3 +1,13 @@
+constexpr unsigned WINDOW_WIDTH = 800;
+constexpr unsigned WINDOW_HEIGHT = 600;
+std::string playerName = "";
+int level = 1;
+const float regularTimeOfPrizeEffect = 10;
+int scores;
+std::string highScoresStr;
+sf::Sprite brick;
+sf::Sprite platform;
+
 enum states
 {
     menu_screen,
@@ -9,6 +19,8 @@ enum states
     quit,
     high_scores
 };
+
+states gameState = menu_screen;
 
 enum PrizeType
 {
@@ -53,3 +65,23 @@ struct PrizeEffect
     PrizeType prizeEffectType;
     float timeOfEffectApplying;
 };
+
+sf::Sprite expandPlatformSprite;
+sf::Sprite twoBallsSprite;
+sf::Sprite slowBallDownSprite;
+sf::Sprite accelerateBallSprite;
+sf::Sprite extraLifeSprite;
+sf::Sprite portalDoorSprite;
+sf::Sprite stickyBallSprite;
+
+std::map<PrizeType, sf::Sprite *> prizesSprites = {
+    {expand_platform, &expandPlatformSprite},
+    {two_balls, &twoBallsSprite},
+    {slow_ball_down, &slowBallDownSprite},
+    {accelerate_ball, &accelerateBallSprite},
+    {extra_life, &extraLifeSprite},
+    {portal_door, &portalDoorSprite},
+    {sticky_ball, &stickyBallSprite}};
+
+std::vector<sf::Sprite *> activePrizes;
+std::vector<PrizeEffect> prizeEffects;

@@ -4,18 +4,12 @@
 #include <vector>
 #include <algorithm>
 #include <cmath>
+#include "calculations.cpp"
 #include "scores.cpp"
+#include "levels.cpp"
 
 using namespace std;
 void setPlatformSize();
-
-sf::Sprite expandPlatformSprite;
-sf::Sprite twoBallsSprite;
-sf::Sprite slowBallDownSprite;
-sf::Sprite accelerateBallSprite;
-sf::Sprite extraLifeSprite;
-sf::Sprite portalDoorSprite;
-sf::Sprite stickyBallSprite;
 
 const sf::Vector2f gameFieldPosition = sf::Vector2f(50, 50);
 const float GAME_FIELD_WIDTH = 300;
@@ -37,9 +31,8 @@ float koeffOfBallSpeed = 1.0f;
 const float regularBallSpeed = 100.0f;
 float prizeStartTime;
 
-sf::Sprite platform;
+//sf::Sprite platform;
 sf::Sprite livesDesignation;
-sf::Sprite brick;
 sf::Sprite ball;
 sf::Sprite highScoresSprite;
 sf::Sprite player;
@@ -59,84 +52,9 @@ sf::Text scoresText;
 sf::Text highScoresText;
 sf::RectangleShape levelLostModal;
 int selectedModalItem = 1;
-std::string highScoresStr;
-std::vector<sf::Sprite *> activePrizes;
-std::vector<PrizeEffect> prizeEffects;
 
-std::map<PrizeType, sf::Sprite *> prizesSprites = {
-    {expand_platform, &expandPlatformSprite},
-    {two_balls, &twoBallsSprite},
-    {slow_ball_down, &slowBallDownSprite},
-    {accelerate_ball, &accelerateBallSprite},
-    {extra_life, &extraLifeSprite},
-    {portal_door, &portalDoorSprite},
-    {sticky_ball, &stickyBallSprite}};
-
-sf::Vector2f toEuclidean(float radius, float angle)
-{
-    return {
-        radius * std::cos(angle),
-        radius * std::sin(angle)};
-}
-
-// bool comparePlayers(const Player &a, const Player &b)
-// {
-//     return a.scores >= b.scores;
-// }
-
-// void readHighScores(std::list<Player> &bestScores)
-// {
-//     std::ifstream fileout("HighScores.txt"); // окрываем файл для чтения
-//     if (fileout.is_open())
-//     {
-//         std::string line;
-//         while (getline(fileout, line))
-//         {
-//             if (line.empty())
-//                 break;
-//             size_t i = line.find(' ');
-//             std::string scoreStr = line.substr(0, i);
-//             int score = std::stoi(scoreStr);
-//             std::string name = line.substr(i + 1, line.length());
-//             bestScores.push_back({score, name});
-//         }
-//     }
-//     fileout.close();
-// }
-
-// void writeHighScores(std::list<Player> &bestScores)
-// {
-//     int numberOfRecords = 5;
-//     std::ofstream filein;          // поток для записи
-//     filein.open("HighScores.txt"); // окрываем файл для записи
-//     bestScores.sort(comparePlayers);
-//     for (Player player : bestScores)
-//     {
-//         filein << player.scores << " " << player.name << endl;
-//         numberOfRecords--;
-//         if (numberOfRecords < 1)
-//             break;
-//     }
-//     filein.close();
-// }
-
-// void handleScores()
-// {
-//     std::list<Player> bestScores;
-//     if (scores != 0)
-//     {
-//         Player currPlayer = {scores, playerName};
-//         bestScores.push_front(currPlayer);
-//     }
-//     readHighScores(bestScores);
-//     writeHighScores(bestScores);
-// }
-
-//из радиан в градусы
-float toDegrees(float radians)
-{
-    return float(double(radians) * 180.0 / M_PI);
-}
+//std::vector<sf::Sprite *> activePrizes;
+//std::vector<PrizeEffect> prizeEffects;
 
 void resetPlatform()
 {
@@ -148,28 +66,25 @@ void resetBall()
     ball.setPosition(INITIAL_BALL_X, INITIAL_BALL_Y);
 }
 
-Brick createBrick(sf::Color color, sf::Vector2f position, map<int, PrizeType> prizesAssignment, const int index)
-{
-    brick.setPosition(position);
-    brick.setColor(color);
-    Brick oneBrick;
-    // oneBrick.sprite.setPosition(position);
-    // oneBrick.sprite.setColor(color);
-    oneBrick.brickSprite = brick;
-    //oneBrick.position = position;
-    if (prizesAssignment.count(index))
-    {
-        oneBrick.brickSprite.setColor(sf::Color(41, 255, 0));
-        PrizeType prize = prizesAssignment[index];
-        oneBrick.prize.prizeType = prize;
-        oneBrick.prize.prizeSprite = prizesSprites[prize];
-    }
-    else
-    {
-        oneBrick.prize.prizeType = none;
-    }
-    return oneBrick;
-}
+// Brick createBrick(sf::Color color, sf::Vector2f position, map<int, PrizeType> prizesAssignment, const int index)
+// {
+//     brick.setPosition(position);
+//     brick.setColor(color);
+//     Brick oneBrick;
+//     oneBrick.brickSprite = brick;
+//     if (prizesAssignment.count(index))
+//     {
+//         oneBrick.brickSprite.setColor(sf::Color(41, 255, 0));
+//         PrizeType prize = prizesAssignment[index];
+//         oneBrick.prize.prizeType = prize;
+//         oneBrick.prize.prizeSprite = prizesSprites[prize];
+//     }
+//     else
+//     {
+//         oneBrick.prize.prizeType = none;
+//     }
+//     return oneBrick;
+// }
 
 void handlePrize(sf::FloatRect brickBounds, PrizeType prizeType)
 {
@@ -216,13 +131,6 @@ void handleBallCollisionWithPlatform(sf::FloatRect platformBounds, sf::FloatRect
         ballYdir = -1 * abs(ballYdir);
         ballXdir = 1 * abs(ballXdir);
     }
-}
-
-void decreaseScores()
-{
-    scores >= 50
-        ? scores = scores - 50
-        : scores = 0;
 }
 
 void handleBallMiss()
@@ -495,146 +403,139 @@ void redrawFrame(sf::RenderWindow &window, std::vector<Brick> bricks, sf::Rectan
     window.display();
 }
 
-int getRandomNumber(int min, int max)
-{
-    // const double fraction = 1.0 / (static_cast<double>(RAND_MAX) + 1.0);
-    // return static_cast<int>(rand() * fraction * (max - min + 1) + min);
-    return rand() % (max + 1);
-}
+// int changeBrickIndex(int index, const int bricksNumber)
+// {
+//     index = index + 1;
+//     if (index > bricksNumber - 1)
+//     {
+//         index = index - 2;
+//     }
+//     return index;
+// }
 
-int changeBrickIndex(int index, const int bricksNumber)
-{
-    index = index + 1;
-    if (index > bricksNumber - 1)
-    {
-        index = index - 2;
-    }
-    return index;
-}
+// vector<int> definePrizesBricksIndexes(const int bricksNumber, const int numberOfRandoms)
+// {
+//     srand(static_cast<unsigned int>(time(0))); // устанавливаем значение системных часов в качестве стартового числа
+//     vector<int> prizeBricksIndexes;
+//     while (prizeBricksIndexes.size() < numberOfRandoms)
+//     {
+//         int index = getRandomNumber(0, bricksNumber - 1);
+//         while (std::find(prizeBricksIndexes.begin(), prizeBricksIndexes.end(), index) != prizeBricksIndexes.end())
+//             index = changeBrickIndex(index, bricksNumber);
+//         prizeBricksIndexes.push_back(index);
+//         //std::cout << index << "\t";
+//     }
+//     //std::cout << std::endl;
+//     prizeBricksIndexes = {18, 19, 20};
+//     return prizeBricksIndexes;
+// }
 
-vector<int> definePrizesBricksIndexes(const int bricksNumber, const int numberOfRandoms)
-{
-    srand(static_cast<unsigned int>(time(0))); // устанавливаем значение системных часов в качестве стартового числа
-    vector<int> prizeBricksIndexes;
-    while (prizeBricksIndexes.size() < numberOfRandoms)
-    {
-        int index = getRandomNumber(0, bricksNumber - 1);
-        while (std::find(prizeBricksIndexes.begin(), prizeBricksIndexes.end(), index) != prizeBricksIndexes.end())
-            index = changeBrickIndex(index, bricksNumber);
-        prizeBricksIndexes.push_back(index);
-        //std::cout << index << "\t";
-    }
-    //std::cout << std::endl;
-    prizeBricksIndexes = {18, 19, 20};
-    return prizeBricksIndexes;
-}
+// int getBrickIndex(int row, int column, const int columnsTotal)
+// {
+//     return (row * columnsTotal + column);
+// }
 
-int getBrickIndex(int row, int column, const int columnsTotal)
-{
-    return (row * columnsTotal + column);
-}
+// std::vector<Brick> createBricksVector_1level(sf::Vector2f startPosition)
+// {
+//     //BrickKind brickKind = Usual_brick;
+//     const int bricksNumber = 30;
+//     const int bricksWithPrizesNum = 6;
+//     vector<int> prizeBricksIndexes = definePrizesBricksIndexes(bricksNumber, bricksWithPrizesNum);
+//     map<int, PrizeType> prizesAssignment = {
+//         {prizeBricksIndexes[0], slow_ball_down},
+//         {prizeBricksIndexes[1], accelerate_ball},
+//         {prizeBricksIndexes[2], expand_platform},
+//     };
+//     brick.setTexture(getSapphireTexture());
+//     std::vector<Brick> bricks;
+//     float xStart = startPosition.x;
+//     float yStart = startPosition.y;
+//     const int rowsTotal = 5;
+//     const int columnsTotal = 6;
+//     for (int i = 0; i < rowsTotal; i++)
+//     {
+//         for (int j = 0; j < columnsTotal; j++)
+//         {
+//             const int index = getBrickIndex(i, j, columnsTotal);
+//             bricks.push_back(createBrick(sf::Color(250, 107, 235), {x : xStart, y : yStart}, prizesAssignment, index));
+//             xStart = xStart + 45;
+//         }
+//         xStart = startPosition.x;
+//         yStart = yStart + 25;
+//     }
+//     return bricks;
+// }
 
-std::vector<Brick> createBricksVector_1level(sf::Vector2f startPosition)
-{
-    //BrickKind brickKind = Usual_brick;
-    const int bricksNumber = 30;
-    const int bricksWithPrizesNum = 6;
-    vector<int> prizeBricksIndexes = definePrizesBricksIndexes(bricksNumber, bricksWithPrizesNum);
-    map<int, PrizeType> prizesAssignment = {
-        {prizeBricksIndexes[0], slow_ball_down},
-        {prizeBricksIndexes[1], accelerate_ball},
-        {prizeBricksIndexes[2], expand_platform},
-    };
-    brick.setTexture(getSapphireTexture());
-    std::vector<Brick> bricks;
-    float xStart = startPosition.x;
-    float yStart = startPosition.y;
-    const int rowsTotal = 5;
-    const int columnsTotal = 6;
-    for (int i = 0; i < rowsTotal; i++)
-    {
-        for (int j = 0; j < columnsTotal; j++)
-        {
-            const int index = getBrickIndex(i, j, columnsTotal);
-            bricks.push_back(createBrick(sf::Color(250, 107, 235), {x : xStart, y : yStart}, prizesAssignment, index));
-            xStart = xStart + 45;
-        }
-        xStart = startPosition.x;
-        yStart = yStart + 25;
-    }
-    return bricks;
-}
-
-std::vector<Brick> createBricksVector_2level(sf::Vector2f startPosition)
-{
-    const int bricksNumber = 21;
-    const int bricksWithPrizesNum = 2;
-    const int rowBricksNumber = 6;
-    vector<int> prizeBricksIndexes = definePrizesBricksIndexes(bricksNumber, bricksWithPrizesNum);
-    std::vector<Brick> bricks;
-    //map<случайный индекс, тип приза> prizesAssignment
-    map<int, PrizeType> prizesAssignment = {
-        {prizeBricksIndexes[0], slow_ball_down},
-        {prizeBricksIndexes[1], accelerate_ball},
-        {prizeBricksIndexes[2], expand_platform},
-    };
-    brick.setTexture(getRubyTexture(), true);
-    float xStart = startPosition.x;
-    float yStart = startPosition.y;
-    int index = 0;
-    for (int i = 0; i < rowBricksNumber; i++)
-    {
-        bricks.push_back(createBrick(sf::Color(236, 80, 215), {x : xStart, y : yStart}, prizesAssignment, index));
-        index += 1;
-        xStart = xStart + 45;
-    }
-    yStart += 30;
-    xStart = startPosition.x + 20;
-    brick.setTexture(getSapphireTexture(), true);
-    for (int i = 0; i < rowBricksNumber - 1; i++)
-    {
-        bricks.push_back(createBrick(sf::Color(0, 255, 255), {x : xStart, y : yStart}, prizesAssignment, index));
-        index += 1;
-        xStart = xStart + 45;
-    }
-    yStart += 40;
-    xStart = startPosition.x + 40;
-    brick.setTexture(getRubyTexture(), true);
-    for (int i = 0; i < rowBricksNumber - 2; i++)
-    {
-        bricks.push_back(createBrick(sf::Color(0, 255, 0), {x : xStart, y : yStart}, prizesAssignment, index));
-        index += 1;
-        xStart = xStart + 45;
-    }
-    yStart += 30;
-    xStart = startPosition.x + 65;
-    brick.setTexture(getSapphireTexture(), true);
-    for (int i = 0; i < rowBricksNumber - 3; i++)
-    {
-        bricks.push_back(createBrick(sf::Color(183, 130, 210), {x : xStart, y : yStart}, prizesAssignment, index));
-        index += 1;
-        xStart = xStart + 45;
-    }
-    yStart += 40;
-    xStart = startPosition.x + 90;
-    brick.setTexture(getRubyTexture(), true);
-    for (int i = 0; i < rowBricksNumber - 4; i++)
-    {
-        bricks.push_back(createBrick(sf::Color(200, 220, 40), {x : xStart, y : yStart}, prizesAssignment, index));
-        index += 1;
-        xStart = xStart + 45;
-    }
-    yStart += 30;
-    xStart = startPosition.x + 112;
-    brick.setTexture(getSapphireTexture(), true);
-    for (int i = 0; i < rowBricksNumber - 5; i++)
-    {
-        bricks.push_back(createBrick(sf::Color(0, 255, 255), {x : xStart, y : yStart}, prizesAssignment, index));
-        index += 1;
-        xStart = xStart + 45;
-    }
-    return bricks;
-}
+// std::vector<Brick> createBricksVector_2level(sf::Vector2f startPosition)
+// {
+//     const int bricksNumber = 21;
+//     const int bricksWithPrizesNum = 2;
+//     const int rowBricksNumber = 6;
+//     vector<int> prizeBricksIndexes = definePrizesBricksIndexes(bricksNumber, bricksWithPrizesNum);
+//     std::vector<Brick> bricks;
+//     //map<случайный индекс, тип приза> prizesAssignment
+//     map<int, PrizeType> prizesAssignment = {
+//         {prizeBricksIndexes[0], slow_ball_down},
+//         {prizeBricksIndexes[1], accelerate_ball},
+//         {prizeBricksIndexes[2], expand_platform},
+//     };
+//     brick.setTexture(getRubyTexture(), true);
+//     float xStart = startPosition.x;
+//     float yStart = startPosition.y;
+//     int index = 0;
+//     for (int i = 0; i < rowBricksNumber; i++)
+//     {
+//         bricks.push_back(createBrick(sf::Color(236, 80, 215), {x : xStart, y : yStart}, prizesAssignment, index));
+//         index += 1;
+//         xStart = xStart + 45;
+//     }
+//     yStart += 30;
+//     xStart = startPosition.x + 20;
+//     brick.setTexture(getSapphireTexture(), true);
+//     for (int i = 0; i < rowBricksNumber - 1; i++)
+//     {
+//         bricks.push_back(createBrick(sf::Color(0, 255, 255), {x : xStart, y : yStart}, prizesAssignment, index));
+//         index += 1;
+//         xStart = xStart + 45;
+//     }
+//     yStart += 40;
+//     xStart = startPosition.x + 40;
+//     brick.setTexture(getRubyTexture(), true);
+//     for (int i = 0; i < rowBricksNumber - 2; i++)
+//     {
+//         bricks.push_back(createBrick(sf::Color(0, 255, 0), {x : xStart, y : yStart}, prizesAssignment, index));
+//         index += 1;
+//         xStart = xStart + 45;
+//     }
+//     yStart += 30;
+//     xStart = startPosition.x + 65;
+//     brick.setTexture(getSapphireTexture(), true);
+//     for (int i = 0; i < rowBricksNumber - 3; i++)
+//     {
+//         bricks.push_back(createBrick(sf::Color(183, 130, 210), {x : xStart, y : yStart}, prizesAssignment, index));
+//         index += 1;
+//         xStart = xStart + 45;
+//     }
+//     yStart += 40;
+//     xStart = startPosition.x + 90;
+//     brick.setTexture(getRubyTexture(), true);
+//     for (int i = 0; i < rowBricksNumber - 4; i++)
+//     {
+//         bricks.push_back(createBrick(sf::Color(200, 220, 40), {x : xStart, y : yStart}, prizesAssignment, index));
+//         index += 1;
+//         xStart = xStart + 45;
+//     }
+//     yStart += 30;
+//     xStart = startPosition.x + 112;
+//     brick.setTexture(getSapphireTexture(), true);
+//     for (int i = 0; i < rowBricksNumber - 5; i++)
+//     {
+//         bricks.push_back(createBrick(sf::Color(0, 255, 255), {x : xStart, y : yStart}, prizesAssignment, index));
+//         index += 1;
+//         xStart = xStart + 45;
+//     }
+//     return bricks;
+// }
 
 sf::RectangleShape createGameField()
 {
@@ -765,21 +666,6 @@ void resetGlobalVars()
     //prizeStartTime = 0;
     prizeEffects.clear();
     activePrizes.clear();
-}
-
-void getBestScores()
-{
-    std::ifstream fileout("HighScores.txt");
-    if (fileout.is_open())
-    {
-        std::string line;
-        if (getline(fileout, line))
-        {
-            size_t i = line.find(' ');
-            highScoresStr = line.substr(0, i);
-        }
-    }
-    fileout.close();
 }
 
 void loadPrizesTextures()

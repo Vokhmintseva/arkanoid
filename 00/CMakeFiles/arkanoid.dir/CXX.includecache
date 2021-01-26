@@ -642,6 +642,8 @@ C:/CppDistro/MinGW/include/SFML/Window/WindowStyle.hpp
 
 C:/OsnProjDe/arkanoid/00/assets.cpp
 
+C:/OsnProjDe/arkanoid/00/calculations.cpp
+
 C:/OsnProjDe/arkanoid/00/game.h
 cstdlib
 -
@@ -655,8 +657,12 @@ algorithm
 -
 cmath
 -
+calculations.cpp
+C:/OsnProjDe/arkanoid/00/calculations.cpp
 scores.cpp
 C:/OsnProjDe/arkanoid/00/scores.cpp
+levels.cpp
+C:/OsnProjDe/arkanoid/00/levels.cpp
 
 C:/OsnProjDe/arkanoid/00/globalVars.cpp
 
@@ -667,6 +673,8 @@ list
 C:/OsnProjDe/arkanoid/00/inputName.h
 string
 -
+
+C:/OsnProjDe/arkanoid/00/levels.cpp
 
 C:/OsnProjDe/arkanoid/00/main.cpp
 SFML/Graphics.hpp
