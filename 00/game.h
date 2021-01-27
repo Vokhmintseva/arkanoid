@@ -66,26 +66,6 @@ void resetBall()
     ball.setPosition(INITIAL_BALL_X, INITIAL_BALL_Y);
 }
 
-// Brick createBrick(sf::Color color, sf::Vector2f position, map<int, PrizeType> prizesAssignment, const int index)
-// {
-//     brick.setPosition(position);
-//     brick.setColor(color);
-//     Brick oneBrick;
-//     oneBrick.brickSprite = brick;
-//     if (prizesAssignment.count(index))
-//     {
-//         oneBrick.brickSprite.setColor(sf::Color(41, 255, 0));
-//         PrizeType prize = prizesAssignment[index];
-//         oneBrick.prize.prizeType = prize;
-//         oneBrick.prize.prizeSprite = prizesSprites[prize];
-//     }
-//     else
-//     {
-//         oneBrick.prize.prizeType = none;
-//     }
-//     return oneBrick;
-// }
-
 void handlePrize(sf::FloatRect brickBounds, PrizeType prizeType)
 {
     sf::Sprite *spritePtr = new sf::Sprite();
@@ -111,7 +91,8 @@ void handleBallCollisionWithBrick(sf::FloatRect brickBounds, sf::FloatRect ballB
     {
         ballXdir = -1 * ballXdir;
     }
-    if (brick.prize.prizeType != none)
+
+    if (brick.prize.prizeType != none && !brick.isBrokenWithDoubleHit)
     {
         handlePrize(brickBounds, brick.prize.prizeType);
     }
@@ -156,7 +137,7 @@ void handleBallMiss()
     }
 }
 
-void checkBallColiisionWithBrick(const sf::FloatRect &ballBounds, std::vector<Brick> &bricks)
+void checkBallCollisionWithBrick(const sf::FloatRect &ballBounds, std::vector<Brick> &bricks, std::vector<float> *timeFromCollisionWithCrackedBrick)
 {
     for (int i = 0; i < bricks.size(); i++)
     {
@@ -164,8 +145,21 @@ void checkBallColiisionWithBrick(const sf::FloatRect &ballBounds, std::vector<Br
         const sf::FloatRect brickBounds = brick.getGlobalBounds();
         if (ballBounds.intersects(brickBounds))
         {
-            handleBallCollisionWithBrick(brickBounds, ballBounds, bricks[i]);
-            bricks.erase(bricks.begin() + i);
+            if (bricks[i].isBrokenWithDoubleHit)
+            {
+                bricks[i].brickSprite.setTexture(getStoneCrackedTexture());
+            }
+            if ((*timeFromCollisionWithCrackedBrick)[i] <= 0.0f)
+            {
+                handleBallCollisionWithBrick(brickBounds, ballBounds, bricks[i]);
+                if (!bricks[i].isBrokenWithDoubleHit)
+                    bricks.erase(bricks.begin() + i);
+            }
+            if (bricks[i].isBrokenWithDoubleHit)
+            {
+                bricks[i].isBrokenWithDoubleHit = false;
+                timeFromCollisionWithCrackedBrick->insert(timeFromCollisionWithCrackedBrick->begin() + i, 0.15f);
+            }
             if (bricks.empty())
             {
                 level += 1;
@@ -175,7 +169,7 @@ void checkBallColiisionWithBrick(const sf::FloatRect &ballBounds, std::vector<Br
     }
 }
 
-void checkBallColiisionWithPlatform(const sf::FloatRect &ballBounds)
+void checkBallCollisionWithPlatform(const sf::FloatRect &ballBounds)
 {
     const sf::FloatRect platformBounds = platform.getGlobalBounds();
     if (ballBounds.intersects(platformBounds))
@@ -184,7 +178,7 @@ void checkBallColiisionWithPlatform(const sf::FloatRect &ballBounds)
     }
 }
 
-void checkBallColiisionWithEdges(const sf::FloatRect &ballBounds, sf::Vector2f &newGlobalCoords)
+void checkBallCollisionWithEdges(const sf::FloatRect &ballBounds, sf::Vector2f &newGlobalCoords)
 {
     if (newGlobalCoords.x >= RIGHT_EDGE - BALL_SIZE)
     {
@@ -205,13 +199,13 @@ void checkBallColiisionWithEdges(const sf::FloatRect &ballBounds, sf::Vector2f &
     }
 }
 
-void updateBall(float &ballSpeed, float &dt, std::vector<Brick> &bricks)
+void updateBall(float &ballSpeed, float &dt, std::vector<Brick> &bricks, std::vector<float> *timeFromCollisionWithCrackedBrick)
 {
     if (isPaused || gameState != playing)
         return;
     const sf::FloatRect ballBounds = ball.getGlobalBounds();
-    checkBallColiisionWithBrick(ballBounds, bricks);
-    checkBallColiisionWithPlatform(ballBounds);
+    checkBallCollisionWithBrick(ballBounds, bricks, timeFromCollisionWithCrackedBrick);
+    checkBallCollisionWithPlatform(ballBounds);
     const float angle = 45;
     const sf::Vector2f currentBallPos = ball.getPosition();
     const float S = ballSpeed * dt;
@@ -219,7 +213,7 @@ void updateBall(float &ballSpeed, float &dt, std::vector<Brick> &bricks)
     newLocalCoords.x = ballXdir * newLocalCoords.x;
     newLocalCoords.y = ballYdir * newLocalCoords.y;
     sf::Vector2f newGlobalCoords = currentBallPos + newLocalCoords;
-    checkBallColiisionWithEdges(ballBounds, newGlobalCoords);
+    checkBallCollisionWithEdges(ballBounds, newGlobalCoords);
 }
 
 void updatePlatform(sf::Keyboard::Key &key, float &dt)
@@ -366,7 +360,6 @@ void drawSidebar(sf::RenderWindow &window)
     window.draw(scoresText);
     window.draw(scoresSprite);
     sf::Vector2f initPos = {x : 370, y : 310};
-    //cout << lives << endl;
     for (int i = 0; i < lives; i++)
     {
         livesDesignation.setPosition(initPos);
@@ -659,7 +652,7 @@ void adjustGameLostModal()
 void resetGlobalVars()
 {
     isPaused = true;
-    lives = 2;
+    lives = 10;
     int selectedModalItem = 1;
     gameState = playing;
     highScoresStr = "";
@@ -878,6 +871,29 @@ bool shouldLeaveGame()
             gameState == start_game);
 }
 
+updateArrOfTimeFromCollision(std::vector<float> *timeFromCollisionWithCrackedBrick, float dt)
+{
+
+    //for (int i = 0; i < timeFromCollisionWithCrackedBrick->size(); i++)
+    // {
+    //     cout << "i " << i << " " << (*timeFromCollisionWithCrackedBrick)[i] << endl;
+
+    // }
+    // cout << "iter 28 in update" << (*timeFromCollisionWithCrackedBrick)[28] << endl;
+    for (auto it = timeFromCollisionWithCrackedBrick->begin(); it != timeFromCollisionWithCrackedBrick->end(); ++it)
+    {
+        if (*it == 0)
+        {
+            continue;
+        }
+        *it -= dt;
+        if (*it <= 0)
+        {
+            (*it = 0);
+        }
+    }
+}
+
 void playGame(sf::RenderWindow &window)
 {
     resetGlobalVars();
@@ -889,14 +905,20 @@ void playGame(sf::RenderWindow &window)
     adjustSidebar();
     loadPrizesTextures();
     std::vector<Brick> bricks;
+    std::vector<float> timeFromCollisionWithCrackedBrick;
     switch (level)
     {
     case 1:
-        bricks = createBricksVector_2level({x : 70, y : 65});
+        bricks = createBricksVector_1level({x : 70, y : 65}, &timeFromCollisionWithCrackedBrick);
         break;
     case 2:
-        //bricks = createBricksVector_1level({x : 65, y : 60});
+        bricks = createBricksVector_2level({x : 65, y : 60}, &timeFromCollisionWithCrackedBrick);
         break;
+    case 3:
+        bricks = createBricksVector_3level({x : 65, y : 60}, &timeFromCollisionWithCrackedBrick);
+        break;
+    default:
+        gameState = menu_screen;
     }
     sf::RectangleShape gameField = createGameField();
     sf::Clock clock;
@@ -904,8 +926,9 @@ void playGame(sf::RenderWindow &window)
     {
         float dt = clock.restart().asSeconds();
         pollEvents(window, dt);
-        updateBall(ballSpeed, dt, bricks);
+        updateBall(ballSpeed, dt, bricks, &timeFromCollisionWithCrackedBrick);
         updateFallingPrizes(dt);
+        updateArrOfTimeFromCollision(&timeFromCollisionWithCrackedBrick, dt);
         updatePrizeEffects(dt); //обновить время действия эффектов от призов
         redrawFrame(window, bricks, gameField);
         if (shouldLeaveGame())

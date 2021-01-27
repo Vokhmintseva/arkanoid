@@ -58,6 +58,7 @@ struct Brick
 {
     sf::Sprite brickSprite;
     Prize prize;
+    bool isBrokenWithDoubleHit;
 };
 
 struct PrizeEffect

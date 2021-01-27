@@ -17,6 +17,7 @@ sf::Texture portalDoorTexture;
 sf::Texture stickyBallTexture;
 sf::Texture sapphireTexture;
 sf::Texture rubyTexture;
+sf::Texture stoneCrackedTexture;
 sf::Font font;
 
 void loadAssets()
@@ -39,6 +40,7 @@ void loadAssets()
     portalDoorTexture.loadFromFile("00/images/door.png");
     stickyBallTexture.loadFromFile("00/images/duct-tape.png");
     sapphireTexture.loadFromFile("00/images/sapphire.png");
+    stoneCrackedTexture.loadFromFile("00/images/emerald_cracked.png");
     //emeraldTexture.loadFromFile("00/images/emerald.png");
     rubyTexture.loadFromFile("00/images/ruby.png");
 
@@ -138,6 +140,11 @@ sf::Texture &getSapphireTexture()
 sf::Texture &getRubyTexture()
 {
     return rubyTexture;
+}
+
+sf::Texture &getStoneCrackedTexture()
+{
+    return stoneCrackedTexture;
 }
 
 sf::Font &getFont()
