@@ -44,7 +44,7 @@ vector<int> definePrizesBricksIndexes(const int bricksNumber, const int numberOf
             index = changeBrickIndex(index, bricksNumber);
         prizeBricksIndexes.push_back(index);
     }
-    prizeBricksIndexes = {18, 19, 20};
+    prizeBricksIndexes = {24, 25, 26, 27, 28, 28};
     return prizeBricksIndexes;
 }
 
@@ -62,10 +62,12 @@ std::vector<Brick> createBricksVector_1level(sf::Vector2f startPosition, std::ve
     const int bricksWithPrizesNum = 6;
     vector<int> prizeBricksIndexes = definePrizesBricksIndexes(bricksNumber, bricksWithPrizesNum);
     map<int, PrizeType> prizesAssignment = {
-        {prizeBricksIndexes[0], slow_ball_down},
-        {prizeBricksIndexes[1], accelerate_ball},
-        {prizeBricksIndexes[2], expand_platform},
-    };
+        {prizeBricksIndexes[0], portal_door},
+        {prizeBricksIndexes[1], portal_door},
+        {prizeBricksIndexes[2], portal_door},
+        {prizeBricksIndexes[3], portal_door},
+        {prizeBricksIndexes[4], portal_door},
+        {prizeBricksIndexes[5], portal_door}};
     brick.setTexture(getBrickTexture());
     std::vector<Brick> bricks;
     float xStart = startPosition.x;
