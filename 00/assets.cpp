@@ -41,9 +41,7 @@ void loadAssets()
     stickyBallTexture.loadFromFile("00/images/duct-tape.png");
     sapphireTexture.loadFromFile("00/images/sapphire.png");
     stoneCrackedTexture.loadFromFile("00/images/emerald_cracked.png");
-    //emeraldTexture.loadFromFile("00/images/emerald.png");
     rubyTexture.loadFromFile("00/images/ruby.png");
-
     font.loadFromFile("00/perfectDOSVGA437.ttf");
 }
 

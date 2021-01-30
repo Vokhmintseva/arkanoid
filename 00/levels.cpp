@@ -1,5 +1,3 @@
-// #include <vector>
-// #include <map>
 using namespace std;
 
 Brick createBrick(sf::Color color, sf::Vector2f position, map<int, PrizeType> prizesAssignment, const int index, bool isDoubleHitBrick)
@@ -11,7 +9,6 @@ Brick createBrick(sf::Color color, sf::Vector2f position, map<int, PrizeType> pr
     oneBrick.isBrokenWithDoubleHit = isDoubleHitBrick;
     if (prizesAssignment.count(index))
     {
-        oneBrick.brickSprite.setColor(sf::Color(41, 255, 0));
         PrizeType prize = prizesAssignment[index];
         oneBrick.prize.prizeType = prize;
         oneBrick.prize.prizeSprite = prizesSprites[prize];
@@ -44,7 +41,6 @@ vector<int> definePrizesBricksIndexes(const int bricksNumber, const int numberOf
             index = changeBrickIndex(index, bricksNumber);
         prizeBricksIndexes.push_back(index);
     }
-    prizeBricksIndexes = {24, 25, 26, 27, 28, 28};
     return prizeBricksIndexes;
 }
 
@@ -59,15 +55,19 @@ std::vector<Brick> createBricksVector_1level(sf::Vector2f startPosition, std::ve
     timeFromCollisionWithCrackedBrick->resize(bricksNumber);
     for (float time : *timeFromCollisionWithCrackedBrick)
         time = 0;
-    const int bricksWithPrizesNum = 6;
+    const int bricksWithPrizesNum = 10;
     vector<int> prizeBricksIndexes = definePrizesBricksIndexes(bricksNumber, bricksWithPrizesNum);
     map<int, PrizeType> prizesAssignment = {
-        {prizeBricksIndexes[0], portal_door},
-        {prizeBricksIndexes[1], portal_door},
-        {prizeBricksIndexes[2], portal_door},
-        {prizeBricksIndexes[3], portal_door},
-        {prizeBricksIndexes[4], portal_door},
-        {prizeBricksIndexes[5], portal_door}};
+        {prizeBricksIndexes[0], sticky_ball},
+        {prizeBricksIndexes[1], slow_ball_down},
+        {prizeBricksIndexes[2], sticky_ball},
+        {prizeBricksIndexes[3], expand_platform},
+        {prizeBricksIndexes[4], sticky_ball},
+        {prizeBricksIndexes[5], accelerate_ball},
+        {prizeBricksIndexes[6], portal_door},
+        {prizeBricksIndexes[7], portal_door},
+        {prizeBricksIndexes[8], sticky_ball},
+        {prizeBricksIndexes[9], sticky_ball}};
     brick.setTexture(getBrickTexture());
     std::vector<Brick> bricks;
     float xStart = startPosition.x;
@@ -95,7 +95,7 @@ std::vector<Brick> createBricksVector_2level(sf::Vector2f startPosition, std::ve
     timeFromCollisionWithCrackedBrick->resize(bricksNumber);
     for (float time : *timeFromCollisionWithCrackedBrick)
         time = 0;
-    const int bricksWithPrizesNum = 2;
+    const int bricksWithPrizesNum = 7;
     const int rowBricksNumber = 6;
     vector<int> prizeBricksIndexes = definePrizesBricksIndexes(bricksNumber, bricksWithPrizesNum);
     std::vector<Brick> bricks;
@@ -104,6 +104,10 @@ std::vector<Brick> createBricksVector_2level(sf::Vector2f startPosition, std::ve
         {prizeBricksIndexes[0], slow_ball_down},
         {prizeBricksIndexes[1], accelerate_ball},
         {prizeBricksIndexes[2], expand_platform},
+        {prizeBricksIndexes[3], portal_door},
+        {prizeBricksIndexes[4], slow_ball_down},
+        {prizeBricksIndexes[5], extra_life},
+        {prizeBricksIndexes[6], extra_life},
     };
     brick.setTexture(getRubyTexture(), true);
     float xStart = startPosition.x;
@@ -173,13 +177,19 @@ std::vector<Brick> createBricksVector_3level(sf::Vector2f startPosition, std::ve
     for (float time : *timeFromCollisionWithCrackedBrick)
         time = 0;
     //std::fill(timeFromCollisionWithCrackedBrick.begin(), timeFromCollisionWithCrackedBrick.end(), 0);
-    const int bricksWithPrizesNum = 6;
+    const int bricksWithPrizesNum = 10;
     vector<int> prizeBricksIndexes = definePrizesBricksIndexes(bricksNumber, bricksWithPrizesNum);
     map<int, PrizeType> prizesAssignment = {
-        {prizeBricksIndexes[0], slow_ball_down},
-        {prizeBricksIndexes[1], accelerate_ball},
-        {prizeBricksIndexes[2], expand_platform},
-    };
+        {prizeBricksIndexes[0], sticky_ball},
+        {prizeBricksIndexes[1], extra_life},
+        {prizeBricksIndexes[2], extra_life},
+        {prizeBricksIndexes[3], sticky_ball},
+        {prizeBricksIndexes[4], accelerate_ball},
+        {prizeBricksIndexes[5], slow_ball_down},
+        {prizeBricksIndexes[6], expand_platform},
+        {prizeBricksIndexes[7], slow_ball_down},
+        {prizeBricksIndexes[8], expand_platform},
+        {prizeBricksIndexes[9], accelerate_ball}};
     brick.setTexture(getSapphireTexture());
     std::vector<Brick> bricks;
     float xStart = startPosition.x;

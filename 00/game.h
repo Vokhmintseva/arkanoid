@@ -34,14 +34,11 @@ const sf::Vector2f DOOR_POSITION = {RIGHT_EDGE, TOP + GAME_FIELD_HEIGHT / 4};
 const float DOOR_WIDTH = 5;
 const float DOOR_HEIGHT = GAME_FIELD_HEIGHT / 2;
 
-//sf::Sprite platform;
 sf::Sprite livesDesignation;
 sf::Sprite ball;
 sf::Sprite highScoresSprite;
-//sf::Sprite player;
 sf::Sprite background;
 sf::Sprite scoresSprite;
-
 int ballXdir;
 int ballYdir;
 float ballSpeed;
@@ -105,31 +102,56 @@ bool isStickyBallActive()
 {
     for (int i = 0; i < prizeEffects.size(); i++)
     {
-        return prizeEffects[i].prizeEffectType == sticky_ball;
+        if (prizeEffects[i].prizeEffectType == sticky_ball)
+        {
+            return true;
+        }
     }
 }
 
-void handleBallCollisionWithPlatform(sf::FloatRect platformBounds, sf::FloatRect ballBounds)
+void handleBallCollisionWithPlatform(sf::FloatRect platformBounds, sf::FloatRect ballBounds, float &ballAngle, bool &isBallStuck)
 {
-    if ((ballBounds.top + ballBounds.width) > (platformBounds.top + 3))
+    if ((ballBounds.top + ballBounds.height) >= (platformBounds.top + 3))
     {
         return;
     }
     if (isStickyBallActive())
     {
-        ballSpeed = 0;
+        isBallStuck = true;
     }
     const float ballCenter = ballBounds.left + BALL_SIZE / 2;
-    const float platformCenter = platformBounds.left + PLATFORM_WIDTH / 2;
-    if (ballCenter <= platformCenter)
+    const float point1 = platformBounds.left + PLATFORM_WIDTH / 4;
+    const float point2 = platformBounds.left + PLATFORM_WIDTH / 2;
+    const float point3 = platformBounds.left + PLATFORM_WIDTH / 4 * 3;
+    if (ballCenter <= point1)
     {
+        ballAngle = 45;
         ballYdir = -1 * abs(ballYdir);
         ballXdir = -1 * abs(ballXdir);
+        return;
     }
-    else
+
+    if (ballCenter <= point2 && ballCenter > point1)
     {
+        ballAngle = 20;
+        ballYdir = -1 * abs(ballYdir);
+        ballXdir = -1 * abs(ballXdir);
+        return;
+    }
+
+    if (ballCenter > point2 && ballCenter <= point3)
+    {
+        ballAngle = 20;
         ballYdir = -1 * abs(ballYdir);
         ballXdir = 1 * abs(ballXdir);
+        return;
+    }
+    if (ballCenter > point3)
+    {
+        ballAngle = 45;
+        ballYdir = -1 * abs(ballYdir);
+        ballXdir = 1 * abs(ballXdir);
+        return;
     }
 }
 
@@ -156,7 +178,8 @@ void handleBallMiss(int &lives)
     }
 }
 
-void checkBallCollisionWithBrick(const sf::FloatRect &ballBounds, std::vector<Brick> &bricks, std::vector<float> *timeFromCollisionWithCrackedBrick)
+void checkBallCollisionWithBrick(const sf::FloatRect &ballBounds, std::vector<Brick> &bricks, std::vector<float> *timeFromCollisionWithCrackedBrick,
+                                 float &timeToShowLevelPassedMsg)
 {
     for (int i = 0; i < bricks.size(); i++)
     {
@@ -182,18 +205,19 @@ void checkBallCollisionWithBrick(const sf::FloatRect &ballBounds, std::vector<Br
             if (bricks.empty())
             {
                 level += 1;
-                gameState = start_game;
+                timeToShowLevelPassedMsg = 3.0f;
+                gameState = level_passed;
             }
         }
     }
 }
 
-void checkBallCollisionWithPlatform(const sf::FloatRect &ballBounds)
+void checkBallCollisionWithPlatform(const sf::FloatRect &ballBounds, float &ballAngle, bool &isBallStuck)
 {
     const sf::FloatRect platformBounds = platform.getGlobalBounds();
     if (ballBounds.intersects(platformBounds))
     {
-        handleBallCollisionWithPlatform(platformBounds, ballBounds);
+        handleBallCollisionWithPlatform(platformBounds, ballBounds, ballAngle, isBallStuck);
     }
 }
 
@@ -201,18 +225,23 @@ bool isPortalDoorActive()
 {
     for (int i = 0; i < prizeEffects.size(); i++)
     {
-        return prizeEffects[i].prizeEffectType == portal_door;
+        if (prizeEffects[i].prizeEffectType == portal_door)
+        {
+            return true;
+        }
     }
 }
 
-void checkBallCollisionWithEdges(const sf::FloatRect &ballBounds, sf::Vector2f &newGlobalCoords, int &lives)
+void checkBallCollisionWithEdges(const sf::FloatRect &ballBounds, sf::Vector2f &newGlobalCoords, int &lives, float &timeToShowLevelPassedMsg)
 {
     if (newGlobalCoords.x >= RIGHT_EDGE - BALL_SIZE)
     {
         if (isPortalDoorActive() && ballBounds.top >= DOOR_POSITION.y && (ballBounds.top + ballBounds.height <= DOOR_POSITION.y + DOOR_HEIGHT))
         {
             level++;
-            gameState = gameState = start_game;
+            gameState = level_passed;
+            timeToShowLevelPassedMsg = 3.0f;
+            return;
         }
         else
         {
@@ -227,35 +256,44 @@ void checkBallCollisionWithEdges(const sf::FloatRect &ballBounds, sf::Vector2f &
     {
         ballYdir = 1 * abs(ballYdir);
     }
-    ball.setPosition(newGlobalCoords);
+}
+
+void checkBallMiss(sf::Vector2f &newGlobalCoords, int &lives)
+{
     if (newGlobalCoords.y >= BOTTOM)
     {
         handleBallMiss(lives);
     }
 }
 
-void updateBall(float &ballSpeed, float &dt, std::vector<Brick> &bricks, std::vector<float> *timeFromCollisionWithCrackedBrick, int &lives)
+void updateBall(float &ballSpeed, float &dt, std::vector<Brick> &bricks, std::vector<float> *timeFromCollisionWithCrackedBrick, int &lives,
+                float &timeToShowLevelPassedMsg, float &ballAngle, bool &isBallStuck)
 {
     if (isPaused || gameState != playing)
         return;
     const sf::FloatRect ballBounds = ball.getGlobalBounds();
     const sf::FloatRect platformBounds = platform.getGlobalBounds();
-    checkBallCollisionWithBrick(ballBounds, bricks, timeFromCollisionWithCrackedBrick);
-    checkBallCollisionWithPlatform(ballBounds);
-    const float angle = 45;
-    const sf::Vector2f currentBallPos = ball.getPosition();
-    const float S = ballSpeed * dt;
-    sf::Vector2f newLocalCoords = toEuclidean(S, angle);
-    newLocalCoords.x = ballXdir * newLocalCoords.x;
-    newLocalCoords.y = ballYdir * newLocalCoords.y;
-    sf::Vector2f newGlobalCoords = currentBallPos + newLocalCoords;
-    if (isStickyBallActive() && ballSpeed == 0)
+    checkBallCollisionWithPlatform(ballBounds, ballAngle, isBallStuck);
+    sf::Vector2f newGlobalCoords;
+    if (isBallStuck)
     {
         const float ballCenter = ballBounds.left + BALL_SIZE / 2;
         const float platformCenter = platformBounds.left + PLATFORM_WIDTH / 2;
         newGlobalCoords = {platformCenter, platformBounds.top - BALL_SIZE};
     }
-    checkBallCollisionWithEdges(ballBounds, newGlobalCoords, lives);
+    else
+    {
+        checkBallCollisionWithBrick(ballBounds, bricks, timeFromCollisionWithCrackedBrick, timeToShowLevelPassedMsg);
+        const sf::Vector2f currentBallPos = ball.getPosition();
+        const float S = ballSpeed * dt;
+        sf::Vector2f newLocalCoords = toEuclidean(S, ballAngle);
+        newLocalCoords.x = ballXdir * newLocalCoords.x;
+        newLocalCoords.y = ballYdir * newLocalCoords.y;
+        newGlobalCoords = currentBallPos + newLocalCoords;
+        checkBallCollisionWithEdges(ballBounds, newGlobalCoords, lives, timeToShowLevelPassedMsg);
+    }
+    ball.setPosition(newGlobalCoords);
+    checkBallMiss(newGlobalCoords, lives);
 }
 
 void updatePlatform(sf::Keyboard::Key &key, float &dt)
@@ -325,12 +363,12 @@ void handleReturnKeyReleased()
     }
 }
 
-void onKeyReleased(sf::Event::KeyEvent &key, float &dt)
+void onKeyReleased(sf::Event::KeyEvent &key, float &dt, bool &isBallStuck)
 {
     switch (key.code)
     {
     case sf::Keyboard::Space:
-        ballSpeed == 0 ? ballSpeed = regularBallSpeed : isPaused = !isPaused;
+        isBallStuck ? isBallStuck = false : isPaused = !isPaused;
         break;
     case sf::Keyboard::Return:
         handleReturnKeyReleased();
@@ -356,7 +394,7 @@ void onKeyPressed(sf::Event::KeyEvent &key, float &dt)
 }
 
 //опрашивает и обрабатывает доступные события в цикле
-void pollEvents(sf::RenderWindow &window, float &dt)
+void pollEvents(sf::RenderWindow &window, float &dt, bool &isBallStuck)
 {
     sf::Event event;
     while (window.pollEvent(event))
@@ -368,7 +406,7 @@ void pollEvents(sf::RenderWindow &window, float &dt)
             gameState = quit;
             return;
         case sf::Event::KeyReleased:
-            onKeyReleased(event.key, dt);
+            onKeyReleased(event.key, dt, isBallStuck);
             break;
         case sf::Event::KeyPressed:
             onKeyPressed(event.key, dt);
@@ -395,18 +433,34 @@ void drawLevelLostModal(sf::RenderWindow &window)
     window.draw(cancelTextModal);
 }
 
-void drawSidebar(sf::RenderWindow &window, int &lives, sf::Sprite playerSprite)
+bool isExtraLifePrizeActive()
+{
+    for (int i = 0; i < prizeEffects.size(); i++)
+    {
+        if (prizeEffects[i].prizeEffectType == extra_life)
+        {
+            return true;
+        }
+    }
+}
+
+void drawSidebar(sf::RenderWindow &window, int &lives, sf::Sprite playerSprite, sf::RectangleShape livesDesignationBackgr)
 {
     window.draw(playerText);
     window.draw(playerSprite);
     window.draw(scoresText);
     window.draw(scoresSprite);
     sf::Vector2f initPos = {x : 370, y : 310};
+    livesDesignationBackgr.setPosition(362, 310 + 22 * (lives - 1));
+    if (isExtraLifePrizeActive())
+    {
+        window.draw(livesDesignationBackgr);
+    }
     for (int i = 0; i < lives; i++)
     {
         livesDesignation.setPosition(initPos);
         window.draw(livesDesignation);
-        initPos.y = initPos.y + 30;
+        initPos.y = initPos.y + 22;
     }
     window.draw(highScoresSprite);
     window.draw(highScoresText);
@@ -420,13 +474,20 @@ void drawPrizes(sf::RenderWindow &window)
     }
 }
 
-void redrawFrame(sf::RenderWindow &window, std::vector<Brick> bricks, sf::RectangleShape field, sf::RectangleShape door, int &lives, sf::Sprite playerSprite)
+void drawLevelPassedModal(sf::RenderWindow &window, sf::Text *levelPassedText)
+{
+    window.draw(levelLostModal);
+    window.draw(*levelPassedText);
+}
+
+void redrawFrame(sf::RenderWindow &window, std::vector<Brick> bricks, sf::RectangleShape field, sf::RectangleShape door, int &lives,
+                 sf::Sprite playerSprite, sf::RectangleShape livesDesignationBackgr, sf::Text *levelPassedText)
 {
     window.clear(sf::Color::White);
     window.draw(background);
     window.draw(field);
     drawBricks(window, bricks);
-    drawSidebar(window, lives, playerSprite);
+    drawSidebar(window, lives, playerSprite, livesDesignationBackgr);
     window.draw(platform);
     window.draw(ball);
     drawPrizes(window);
@@ -437,6 +498,10 @@ void redrawFrame(sf::RenderWindow &window, std::vector<Brick> bricks, sf::Rectan
     if (isPortalDoorActive())
     {
         window.draw(door);
+    }
+    if (gameState == level_passed)
+    {
+        drawLevelPassedModal(window, levelPassedText);
     }
     window.display();
 }
@@ -462,14 +527,18 @@ sf::RectangleShape createDoor()
     return door;
 }
 
-// void setTimeToShowFailMsg(float &dt, float &timeToShowFailMsg)
-// {
-//     timeToShowFailMsg = timeToShowFailMsg + dt;
-//     if (timeToShowFailMsg > 3)
-//     {
-//         gameState = level_lost;
-//     }
-// }
+void recalcTimeToShowLevelPassedMsg(float &dt, float &timeToShowLevelPassedMsg, sf::Text *textPtr)
+{
+    if (gameState == level_passed)
+    {
+        timeToShowLevelPassedMsg -= dt;
+        if (timeToShowLevelPassedMsg <= 0)
+        {
+            gameState = start_game;
+            delete textPtr;
+        }
+    }
+}
 
 void setPlatformSize()
 {
@@ -498,6 +567,16 @@ void adjustBall()
     resetBall();
 }
 
+sf::RectangleShape setLivesDesignationBackgr()
+{
+    sf::RectangleShape livesDesignationBackgr;
+    livesDesignationBackgr.setSize({x : 56, y : 20});
+    livesDesignationBackgr.setOutlineColor(sf::Color(197, 21, 21));
+    livesDesignationBackgr.setFillColor(sf::Color(197, 21, 21));
+    livesDesignationBackgr.setRotation(-20);
+    return livesDesignationBackgr;
+}
+
 sf::Sprite adjustPlayer()
 {
     sf::Sprite playerSprite;
@@ -508,7 +587,6 @@ sf::Sprite adjustPlayer()
 
 void adjustSidebar()
 {
-
     playerText = sf::Text();
     playerText.setFillColor(sf::Color(232, 6, 107));
     playerText.setFont(getFont());
@@ -576,6 +654,18 @@ void adjustGameLostModal()
     cancelTextModal.setFont(getFont());
 }
 
+sf::Text *getLevelPassedText()
+{
+    sf::Text *textPtr = new sf::Text();
+    textPtr->setFillColor(sf::Color::Red);
+    textPtr->setStyle(sf::Text::Bold);
+    textPtr->setCharacterSize(35);
+    textPtr->setString("YOU HAVE PASSED THE LEVEL!");
+    textPtr->setPosition({x : WINDOW_WIDTH / 8, y : WINDOW_HEIGHT / 2});
+    textPtr->setFont(getFont());
+    return textPtr;
+}
+
 void resetGlobalVars()
 {
     isPaused = true;
@@ -626,7 +716,7 @@ void stickyBall()
 {
 }
 
-void applyPrizeEffect(PrizeType prizeType)
+void applyPrizeEffect(PrizeType prizeType, int &lives)
 {
     switch (prizeType)
     {
@@ -649,7 +739,7 @@ void applyPrizeEffect(PrizeType prizeType)
         twoBalls();
         break;
     case extra_life:
-        extraLife();
+        lives++;
         break;
     case portal_door:
         portalDoor();
@@ -678,11 +768,11 @@ void deletePrizeFromActivePrizes(sf::Sprite *prizeSprite)
     deletePtr(prizeSprite);
 }
 
-void handlePrizeCollisionWithPlatform(sf::Sprite *prizeSprite, float &dt)
+void handlePrizeCollisionWithPlatform(sf::Sprite *prizeSprite, float &dt, int &lives)
 {
     prizeStartTime = dt;
     PrizeType prizeType = getPrizeType(prizeSprite);
-    applyPrizeEffect(prizeType);
+    applyPrizeEffect(prizeType, lives);
     deletePrizeFromActivePrizes(prizeSprite);
     PrizeEffect effect;
     effect.prizeEffectType = getPrizeType(prizeSprite);
@@ -690,7 +780,7 @@ void handlePrizeCollisionWithPlatform(sf::Sprite *prizeSprite, float &dt)
     prizeEffects.push_back(effect);
 }
 
-void checkPrizeCollisionWithPlatform(float &dt)
+void checkPrizeCollisionWithPlatform(float &dt, int &lives)
 {
     const sf::FloatRect platformBounds = platform.getGlobalBounds();
     for (sf::Sprite *prizeSprite : activePrizes)
@@ -698,7 +788,7 @@ void checkPrizeCollisionWithPlatform(float &dt)
         const sf::FloatRect prizeBounds = prizeSprite->getGlobalBounds();
         if (prizeBounds.intersects(platformBounds))
         {
-            handlePrizeCollisionWithPlatform(prizeSprite, dt);
+            handlePrizeCollisionWithPlatform(prizeSprite, dt, lives);
         }
     }
 }
@@ -714,27 +804,19 @@ void checkPrizeMiss()
     }
 }
 
-void updateFallingPrizes(float &dt)
+void updateFallingPrizes(float &dt, int &lives)
 {
     if (isPaused || gameState != playing)
         return;
-    const float prizeSpeed = 10;
+    const float prizeSpeed = 40;
     for (sf::Sprite *prizeSprite : activePrizes)
     {
         sf::Vector2f currPos = prizeSprite->getPosition();
         const float newYpos = currPos.y + dt * prizeSpeed;
         prizeSprite->setPosition(currPos.x, newYpos);
     }
-    checkPrizeCollisionWithPlatform(dt);
+    checkPrizeCollisionWithPlatform(dt, lives);
     checkPrizeMiss();
-}
-
-void closePortalDoor()
-{
-}
-
-void nonStickyBall()
-{
 }
 
 void undoEffect(PrizeType prizeType)
@@ -755,18 +837,6 @@ void undoEffect(PrizeType prizeType)
         koeffOfBallSpeed += 0.35;
         if (koeffOfBallSpeed < 2)
             changeBallSpeed(koeffOfBallSpeed);
-        break;
-    // case two_balls_prize_state:
-    //     twoBalls();
-    //     break;
-    // case extra_life_prize_state:
-    //     extraLife();
-    //     break;
-    case portal_door:
-        closePortalDoor();
-        break;
-    case sticky_ball:
-        nonStickyBall();
         break;
     }
 }
@@ -816,6 +886,8 @@ void playGame(sf::RenderWindow &window)
 {
     resetGlobalVars();
     sf::Sprite playerSprite = adjustPlayer();
+    sf::Text *levelPassedText = getLevelPassedText();
+    sf::RectangleShape livesDesignationBackgr = setLivesDesignationBackgr();
     getBestScores();
     background.setTexture(getBackgroundMainTexture());
     adjustPlatform();
@@ -824,14 +896,17 @@ void playGame(sf::RenderWindow &window)
     adjustSidebar();
     loadPrizesTextures();
     std::vector<Brick> bricks;
+    float timeToShowLevelPassedMsg = 0;
     std::vector<float> timeFromCollisionWithCrackedBrick;
     sf::RectangleShape door = createDoor();
-    bool isBallSticky = false;
-    int lives = 3;
+    bool isBallStuck = false;
+    float ballAngle = 45;
+
+    int lives = 10;
     switch (level)
     {
     case 1:
-        bricks = createBricksVector_1level({x : 70, y : 65}, &timeFromCollisionWithCrackedBrick);
+        bricks = createBricksVector_1level({x : 70, y : 60}, &timeFromCollisionWithCrackedBrick);
         break;
     case 2:
         bricks = createBricksVector_2level({x : 65, y : 60}, &timeFromCollisionWithCrackedBrick);
@@ -847,14 +922,17 @@ void playGame(sf::RenderWindow &window)
     while (window.isOpen())
     {
         float dt = clock.restart().asSeconds();
-        pollEvents(window, dt);
-        updateBall(ballSpeed, dt, bricks, &timeFromCollisionWithCrackedBrick, lives);
-        updateFallingPrizes(dt);
+        pollEvents(window, dt, isBallStuck);
+        updateBall(ballSpeed, dt, bricks, &timeFromCollisionWithCrackedBrick, lives, timeToShowLevelPassedMsg, ballAngle, isBallStuck);
+        updateFallingPrizes(dt, lives);
         updateArrOfTimeFromCollision(&timeFromCollisionWithCrackedBrick, dt);
         updatePrizeEffects(dt); //обновить время действия эффектов от призов
-        redrawFrame(window, bricks, gameField, door, lives, playerSprite);
+        recalcTimeToShowLevelPassedMsg(dt, timeToShowLevelPassedMsg, levelPassedText);
+        redrawFrame(window, bricks, gameField, door, lives, playerSprite, livesDesignationBackgr, levelPassedText);
         if (shouldLeaveGame())
         {
+            cout << "return" << endl;
+            cout << gameState << endl;
             return;
         }
     }

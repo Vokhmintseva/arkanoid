@@ -1,4 +1,4 @@
-sf::Vector2f toEuclidean(float radius, float angle)
+sf::Vector2f toEuclidean(float radius, float &angle)
 {
     return {
         radius * std::cos(angle),

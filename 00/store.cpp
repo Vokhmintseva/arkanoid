@@ -17,7 +17,8 @@ enum states
     level_lost,
     level_lost_modal,
     quit,
-    high_scores
+    high_scores,
+    level_passed
 };
 
 states gameState = menu_screen;
