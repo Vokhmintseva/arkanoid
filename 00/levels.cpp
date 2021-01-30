@@ -1,6 +1,7 @@
 using namespace std;
 
-Brick createBrick(sf::Color color, sf::Vector2f position, map<int, PrizeType> prizesAssignment, const int index, bool isDoubleHitBrick, sf::Sprite *brick)
+Brick createBrick(sf::Color color, sf::Vector2f position, map<int, PrizeType> prizesAssignment, const int index, bool isDoubleHitBrick, sf::Sprite *brick,
+                  std::map<PrizeType, sf::Sprite *> *prizesSprites)
 {
     brick->setPosition(position);
     brick->setColor(color);
@@ -11,7 +12,7 @@ Brick createBrick(sf::Color color, sf::Vector2f position, map<int, PrizeType> pr
     {
         PrizeType prize = prizesAssignment[index];
         oneBrick.prize.prizeType = prize;
-        oneBrick.prize.prizeSprite = prizesSprites[prize];
+        oneBrick.prize.prizeSprite = (*prizesSprites)[prize];
     }
     else
     {
@@ -49,7 +50,8 @@ int getBrickIndex(int row, int column, const int columnsTotal)
     return (row * columnsTotal + column);
 }
 
-std::vector<Brick> createBricksVector_1level(sf::Vector2f startPosition, std::vector<float> *timeFromCollisionWithCrackedBrick, sf::Sprite *brick)
+std::vector<Brick> createBricksVector_1level(sf::Vector2f startPosition, std::vector<float> *timeFromCollisionWithCrackedBrick, sf::Sprite *brick,
+                                             std::map<PrizeType, sf::Sprite *> *prizesSprites)
 {
     const int bricksNumber = 30;
     timeFromCollisionWithCrackedBrick->resize(bricksNumber);
@@ -60,14 +62,14 @@ std::vector<Brick> createBricksVector_1level(sf::Vector2f startPosition, std::ve
     map<int, PrizeType> prizesAssignment = {
         {prizeBricksIndexes[0], sticky_ball},
         {prizeBricksIndexes[1], slow_ball_down},
-        {prizeBricksIndexes[2], sticky_ball},
+        {prizeBricksIndexes[2], extra_life},
         {prizeBricksIndexes[3], expand_platform},
         {prizeBricksIndexes[4], sticky_ball},
         {prizeBricksIndexes[5], accelerate_ball},
-        {prizeBricksIndexes[6], portal_door},
-        {prizeBricksIndexes[7], portal_door},
+        {prizeBricksIndexes[6], slow_ball_down},
+        {prizeBricksIndexes[7], accelerate_ball},
         {prizeBricksIndexes[8], sticky_ball},
-        {prizeBricksIndexes[9], sticky_ball}};
+        {prizeBricksIndexes[9], extra_life}};
     brick->setTexture(getBrickTexture());
     std::vector<Brick> bricks;
     float xStart = startPosition.x;
@@ -80,7 +82,7 @@ std::vector<Brick> createBricksVector_1level(sf::Vector2f startPosition, std::ve
         for (int j = 0; j < columnsTotal; j++)
         {
             const int index = getBrickIndex(i, j, columnsTotal);
-            bricks.push_back(createBrick(sf::Color(250, 107, 235), {x : xStart, y : yStart}, prizesAssignment, index, isDoubleHitBrick, brick));
+            bricks.push_back(createBrick(sf::Color(250, 107, 235), {x : xStart, y : yStart}, prizesAssignment, index, isDoubleHitBrick, brick, prizesSprites));
             xStart = xStart + 45;
         }
         xStart = startPosition.x;
@@ -89,7 +91,8 @@ std::vector<Brick> createBricksVector_1level(sf::Vector2f startPosition, std::ve
     return bricks;
 }
 
-std::vector<Brick> createBricksVector_2level(sf::Vector2f startPosition, std::vector<float> *timeFromCollisionWithCrackedBrick, sf::Sprite *brick)
+std::vector<Brick> createBricksVector_2level(sf::Vector2f startPosition, std::vector<float> *timeFromCollisionWithCrackedBrick, sf::Sprite *brick,
+                                             std::map<PrizeType, sf::Sprite *> *prizesSprites)
 {
     const int bricksNumber = 21;
     timeFromCollisionWithCrackedBrick->resize(bricksNumber);
@@ -116,7 +119,7 @@ std::vector<Brick> createBricksVector_2level(sf::Vector2f startPosition, std::ve
     bool isDoubleHitBrick = false;
     for (int i = 0; i < rowBricksNumber; i++)
     {
-        bricks.push_back(createBrick(sf::Color(236, 80, 215), {x : xStart, y : yStart}, prizesAssignment, index, isDoubleHitBrick, brick));
+        bricks.push_back(createBrick(sf::Color(236, 80, 215), {x : xStart, y : yStart}, prizesAssignment, index, isDoubleHitBrick, brick, prizesSprites));
         index += 1;
         xStart = xStart + 45;
     }
@@ -125,7 +128,7 @@ std::vector<Brick> createBricksVector_2level(sf::Vector2f startPosition, std::ve
     brick->setTexture(getSapphireTexture(), true);
     for (int i = 0; i < rowBricksNumber - 1; i++)
     {
-        bricks.push_back(createBrick(sf::Color(0, 255, 255), {x : xStart, y : yStart}, prizesAssignment, index, isDoubleHitBrick, brick));
+        bricks.push_back(createBrick(sf::Color(0, 255, 255), {x : xStart, y : yStart}, prizesAssignment, index, isDoubleHitBrick, brick, prizesSprites));
         index += 1;
         xStart = xStart + 45;
     }
@@ -134,7 +137,7 @@ std::vector<Brick> createBricksVector_2level(sf::Vector2f startPosition, std::ve
     brick->setTexture(getRubyTexture(), true);
     for (int i = 0; i < rowBricksNumber - 2; i++)
     {
-        bricks.push_back(createBrick(sf::Color(0, 255, 0), {x : xStart, y : yStart}, prizesAssignment, index, isDoubleHitBrick, brick));
+        bricks.push_back(createBrick(sf::Color(0, 255, 0), {x : xStart, y : yStart}, prizesAssignment, index, isDoubleHitBrick, brick, prizesSprites));
         index += 1;
         xStart = xStart + 45;
     }
@@ -143,7 +146,7 @@ std::vector<Brick> createBricksVector_2level(sf::Vector2f startPosition, std::ve
     brick->setTexture(getSapphireTexture(), true);
     for (int i = 0; i < rowBricksNumber - 3; i++)
     {
-        bricks.push_back(createBrick(sf::Color(183, 130, 210), {x : xStart, y : yStart}, prizesAssignment, index, isDoubleHitBrick, brick));
+        bricks.push_back(createBrick(sf::Color(183, 130, 210), {x : xStart, y : yStart}, prizesAssignment, index, isDoubleHitBrick, brick, prizesSprites));
         index += 1;
         xStart = xStart + 45;
     }
@@ -152,7 +155,7 @@ std::vector<Brick> createBricksVector_2level(sf::Vector2f startPosition, std::ve
     brick->setTexture(getRubyTexture(), true);
     for (int i = 0; i < rowBricksNumber - 4; i++)
     {
-        bricks.push_back(createBrick(sf::Color(200, 220, 40), {x : xStart, y : yStart}, prizesAssignment, index, isDoubleHitBrick, brick));
+        bricks.push_back(createBrick(sf::Color(200, 220, 40), {x : xStart, y : yStart}, prizesAssignment, index, isDoubleHitBrick, brick, prizesSprites));
         index += 1;
         xStart = xStart + 45;
     }
@@ -161,14 +164,15 @@ std::vector<Brick> createBricksVector_2level(sf::Vector2f startPosition, std::ve
     brick->setTexture(getSapphireTexture(), true);
     for (int i = 0; i < rowBricksNumber - 5; i++)
     {
-        bricks.push_back(createBrick(sf::Color(0, 255, 255), {x : xStart, y : yStart}, prizesAssignment, index, isDoubleHitBrick, brick));
+        bricks.push_back(createBrick(sf::Color(0, 255, 255), {x : xStart, y : yStart}, prizesAssignment, index, isDoubleHitBrick, brick, prizesSprites));
         index += 1;
         xStart = xStart + 45;
     }
     return bricks;
 }
 
-std::vector<Brick> createBricksVector_3level(sf::Vector2f startPosition, std::vector<float> *timeFromCollisionWithCrackedBrick, sf::Sprite *brick)
+std::vector<Brick> createBricksVector_3level(sf::Vector2f startPosition, std::vector<float> *timeFromCollisionWithCrackedBrick, sf::Sprite *brick,
+                                             std::map<PrizeType, sf::Sprite *> *prizesSprites)
 {
     std::vector<sf::Color> colors = {sf::Color(0, 239, 255), sf::Color(211, 225, 3), sf::Color(0, 239, 255),
                                      sf::Color(211, 225, 3), sf::Color(0, 239, 255), sf::Color(211, 225, 3)};
@@ -204,7 +208,7 @@ std::vector<Brick> createBricksVector_3level(sf::Vector2f startPosition, std::ve
             const int index = getBrickIndex(i, j, columnsTotal);
             isDoubleHitBrick = (index < columnsTotal || index >= bricksNumber - columnsTotal) ? true : false;
             //cout << isDoubleHitBrick << endl;
-            bricks.push_back(createBrick(colors[i], {x : xStart, y : yStart}, prizesAssignment, index, isDoubleHitBrick, brick));
+            bricks.push_back(createBrick(colors[i], {x : xStart, y : yStart}, prizesAssignment, index, isDoubleHitBrick, brick, prizesSprites));
             xStart = xStart + 45;
         }
         xStart = startPosition.x;

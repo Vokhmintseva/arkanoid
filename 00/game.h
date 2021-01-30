@@ -43,11 +43,15 @@ sf::Text playerText;
 sf::Text scoresText;
 sf::Text highScoresText;
 sf::RectangleShape levelLostModal;
-sf::Sprite brick;
 sf::Sprite platform;
 
-//std::vector<sf::Sprite *> activePrizes;
-//std::vector<PrizeEffect> prizeEffects;
+sf::Sprite expandPlatformSprite;
+sf::Sprite twoBallsSprite;
+sf::Sprite slowBallDownSprite;
+sf::Sprite accelerateBallSprite;
+sf::Sprite extraLifeSprite;
+sf::Sprite portalDoorSprite;
+sf::Sprite stickyBallSprite;
 
 void resetPlatform()
 {
@@ -67,7 +71,7 @@ void resetBall()
     ball.setPosition(INITIAL_BALL_X, INITIAL_BALL_Y);
 }
 
-void handlePrize(sf::FloatRect brickBounds, PrizeType prizeType)
+void handlePrize(sf::FloatRect brickBounds, PrizeType prizeType, std::vector<sf::Sprite *> &activePrizes)
 {
     sf::Sprite *spritePtr = new sf::Sprite();
     spritePtr->setTexture(getPrizeSpriteTexture(prizeType));
@@ -75,7 +79,8 @@ void handlePrize(sf::FloatRect brickBounds, PrizeType prizeType)
     activePrizes.push_back(spritePtr);
 }
 
-void handleBallCollisionWithBrick(sf::FloatRect brickBounds, sf::FloatRect ballBounds, Brick brick, int &ballXdir, int &ballYdir)
+void handleBallCollisionWithBrick(sf::FloatRect brickBounds, sf::FloatRect ballBounds, Brick brick, int &ballXdir, int &ballYdir,
+                                  std::vector<sf::Sprite *> &activePrizes)
 {
     scores = scores + 50;
     scoresText.setString(std::to_string(scores));
@@ -95,11 +100,11 @@ void handleBallCollisionWithBrick(sf::FloatRect brickBounds, sf::FloatRect ballB
 
     if (brick.prize.prizeType != none && !brick.isBrokenWithDoubleHit)
     {
-        handlePrize(brickBounds, brick.prize.prizeType);
+        handlePrize(brickBounds, brick.prize.prizeType, activePrizes);
     }
 }
 
-bool isStickyBallActive()
+bool isStickyBallActive(std::vector<PrizeEffect> prizeEffects)
 {
     for (int i = 0; i < prizeEffects.size(); i++)
     {
@@ -111,13 +116,13 @@ bool isStickyBallActive()
 }
 
 void handleBallCollisionWithPlatform(sf::FloatRect platformBounds, sf::FloatRect ballBounds, float &ballAngle, bool &isBallStuck,
-                                     int &ballXdir, int &ballYdir)
+                                     int &ballXdir, int &ballYdir, std::vector<PrizeEffect> &prizeEffects)
 {
     if ((ballBounds.top + ballBounds.height) >= (platformBounds.top + 3))
     {
         return;
     }
-    if (isStickyBallActive())
+    if (isStickyBallActive(prizeEffects))
     {
         isBallStuck = true;
     }
@@ -157,7 +162,8 @@ void handleBallCollisionWithPlatform(sf::FloatRect platformBounds, sf::FloatRect
     }
 }
 
-void handleBallMiss(int &lives, int &ballXdir, int &ballYdir, float &ballSpeed, bool &isPaused)
+void handleBallMiss(int &lives, int &ballXdir, int &ballYdir, float &ballSpeed, bool &isPaused, std::vector<PrizeEffect> &prizeEffects,
+                    std::vector<sf::Sprite *> &activePrizes)
 {
     decreaseScores();
     prizeEffects.clear();
@@ -181,7 +187,7 @@ void handleBallMiss(int &lives, int &ballXdir, int &ballYdir, float &ballSpeed, 
 }
 
 void checkBallCollisionWithBrick(const sf::FloatRect &ballBounds, std::vector<Brick> &bricks, std::vector<float> *timeFromCollisionWithCrackedBrick,
-                                 float &timeToShowLevelPassedMsg, int &ballXdir, int &ballYdir)
+                                 float &timeToShowLevelPassedMsg, int &ballXdir, int &ballYdir, std::vector<sf::Sprite *> &activePrizes)
 {
     for (int i = 0; i < bricks.size(); i++)
     {
@@ -195,7 +201,7 @@ void checkBallCollisionWithBrick(const sf::FloatRect &ballBounds, std::vector<Br
             }
             if ((*timeFromCollisionWithCrackedBrick)[i] <= 0.0f)
             {
-                handleBallCollisionWithBrick(brickBounds, ballBounds, bricks[i], ballXdir, ballYdir);
+                handleBallCollisionWithBrick(brickBounds, ballBounds, bricks[i], ballXdir, ballYdir, activePrizes);
                 if (!bricks[i].isBrokenWithDoubleHit)
                     bricks.erase(bricks.begin() + i);
             }
@@ -214,16 +220,16 @@ void checkBallCollisionWithBrick(const sf::FloatRect &ballBounds, std::vector<Br
     }
 }
 
-void checkBallCollisionWithPlatform(const sf::FloatRect &ballBounds, float &ballAngle, bool &isBallStuck, int &ballXdir, int &ballYdir)
+void checkBallCollisionWithPlatform(const sf::FloatRect &ballBounds, float &ballAngle, bool &isBallStuck, int &ballXdir, int &ballYdir, std::vector<PrizeEffect> &prizeEffects)
 {
     const sf::FloatRect platformBounds = platform.getGlobalBounds();
     if (ballBounds.intersects(platformBounds))
     {
-        handleBallCollisionWithPlatform(platformBounds, ballBounds, ballAngle, isBallStuck, ballXdir, ballYdir);
+        handleBallCollisionWithPlatform(platformBounds, ballBounds, ballAngle, isBallStuck, ballXdir, ballYdir, prizeEffects);
     }
 }
 
-bool isPortalDoorActive()
+bool isPortalDoorActive(std::vector<PrizeEffect> &prizeEffects)
 {
     for (int i = 0; i < prizeEffects.size(); i++)
     {
@@ -235,11 +241,11 @@ bool isPortalDoorActive()
 }
 
 void checkBallCollisionWithEdges(const sf::FloatRect &ballBounds, sf::Vector2f &newGlobalCoords, int &lives, float &timeToShowLevelPassedMsg,
-                                 int &ballXdir, int &ballYdir)
+                                 int &ballXdir, int &ballYdir, std::vector<PrizeEffect> &prizeEffects)
 {
     if (newGlobalCoords.x >= RIGHT_EDGE - BALL_SIZE)
     {
-        if (isPortalDoorActive() && ballBounds.top >= DOOR_POSITION.y && (ballBounds.top + ballBounds.height <= DOOR_POSITION.y + DOOR_HEIGHT))
+        if (isPortalDoorActive(prizeEffects) && ballBounds.top >= DOOR_POSITION.y && (ballBounds.top + ballBounds.height <= DOOR_POSITION.y + DOOR_HEIGHT))
         {
             level++;
             gameState = level_passed;
@@ -261,22 +267,24 @@ void checkBallCollisionWithEdges(const sf::FloatRect &ballBounds, sf::Vector2f &
     }
 }
 
-void checkBallMiss(sf::Vector2f &newGlobalCoords, int &lives, int &ballXdir, int &ballYdir, float &ballSpeed, bool &isPaused)
+void checkBallMiss(sf::Vector2f &newGlobalCoords, int &lives, int &ballXdir, int &ballYdir, float &ballSpeed, bool &isPaused,
+                   std::vector<PrizeEffect> &prizeEffects, std::vector<sf::Sprite *> &activePrizes)
 {
     if (newGlobalCoords.y >= BOTTOM)
     {
-        handleBallMiss(lives, ballXdir, ballYdir, ballSpeed, isPaused);
+        handleBallMiss(lives, ballXdir, ballYdir, ballSpeed, isPaused, prizeEffects, activePrizes);
     }
 }
 
 void updateBall(float &ballSpeed, float &dt, std::vector<Brick> &bricks, std::vector<float> *timeFromCollisionWithCrackedBrick, int &lives,
-                float &timeToShowLevelPassedMsg, float &ballAngle, bool &isBallStuck, int &ballXdir, int &ballYdir, bool &isPaused)
+                float &timeToShowLevelPassedMsg, float &ballAngle, bool &isBallStuck, int &ballXdir, int &ballYdir, bool &isPaused,
+                std::vector<PrizeEffect> &prizeEffects, std::vector<sf::Sprite *> &activePrizes)
 {
     if (isPaused || gameState != playing)
         return;
     const sf::FloatRect ballBounds = ball.getGlobalBounds();
     const sf::FloatRect platformBounds = platform.getGlobalBounds();
-    checkBallCollisionWithPlatform(ballBounds, ballAngle, isBallStuck, ballXdir, ballYdir);
+    checkBallCollisionWithPlatform(ballBounds, ballAngle, isBallStuck, ballXdir, ballYdir, prizeEffects);
     sf::Vector2f newGlobalCoords;
     if (isBallStuck)
     {
@@ -286,17 +294,17 @@ void updateBall(float &ballSpeed, float &dt, std::vector<Brick> &bricks, std::ve
     }
     else
     {
-        checkBallCollisionWithBrick(ballBounds, bricks, timeFromCollisionWithCrackedBrick, timeToShowLevelPassedMsg, ballXdir, ballYdir);
+        checkBallCollisionWithBrick(ballBounds, bricks, timeFromCollisionWithCrackedBrick, timeToShowLevelPassedMsg, ballXdir, ballYdir, activePrizes);
         const sf::Vector2f currentBallPos = ball.getPosition();
         const float S = ballSpeed * dt;
         sf::Vector2f newLocalCoords = toEuclidean(S, ballAngle);
         newLocalCoords.x = ballXdir * newLocalCoords.x;
         newLocalCoords.y = ballYdir * newLocalCoords.y;
         newGlobalCoords = currentBallPos + newLocalCoords;
-        checkBallCollisionWithEdges(ballBounds, newGlobalCoords, lives, timeToShowLevelPassedMsg, ballXdir, ballYdir);
+        checkBallCollisionWithEdges(ballBounds, newGlobalCoords, lives, timeToShowLevelPassedMsg, ballXdir, ballYdir, prizeEffects);
     }
     ball.setPosition(newGlobalCoords);
-    checkBallMiss(newGlobalCoords, lives, ballXdir, ballYdir, ballSpeed, isPaused);
+    checkBallMiss(newGlobalCoords, lives, ballXdir, ballYdir, ballSpeed, isPaused, prizeEffects, activePrizes);
 }
 
 void updatePlatform(sf::Keyboard::Key &key, float &dt)
@@ -436,7 +444,7 @@ void drawLevelLostModal(sf::RenderWindow &window)
     window.draw(cancelTextModal);
 }
 
-bool isExtraLifePrizeActive()
+bool isExtraLifePrizeActive(std::vector<PrizeEffect> prizeEffects)
 {
     for (int i = 0; i < prizeEffects.size(); i++)
     {
@@ -447,7 +455,7 @@ bool isExtraLifePrizeActive()
     }
 }
 
-void drawSidebar(sf::RenderWindow &window, int &lives, sf::Sprite playerSprite, sf::RectangleShape livesDesignationBackgr)
+void drawSidebar(sf::RenderWindow &window, int &lives, sf::Sprite playerSprite, sf::RectangleShape livesDesignationBackgr, std::vector<PrizeEffect> &prizeEffects)
 {
     window.draw(playerText);
     window.draw(playerSprite);
@@ -455,7 +463,7 @@ void drawSidebar(sf::RenderWindow &window, int &lives, sf::Sprite playerSprite, 
     window.draw(scoresSprite);
     sf::Vector2f initPos = {x : 370, y : 310};
     livesDesignationBackgr.setPosition(362, 310 + 22 * (lives - 1));
-    if (isExtraLifePrizeActive())
+    if (isExtraLifePrizeActive(prizeEffects))
     {
         window.draw(livesDesignationBackgr);
     }
@@ -469,7 +477,7 @@ void drawSidebar(sf::RenderWindow &window, int &lives, sf::Sprite playerSprite, 
     window.draw(highScoresText);
 }
 
-void drawPrizes(sf::RenderWindow &window)
+void drawPrizes(sf::RenderWindow &window, std::vector<sf::Sprite *> &activePrizes)
 {
     for (sf::Sprite *prizeSprite : activePrizes)
     {
@@ -484,21 +492,22 @@ void drawLevelPassedModal(sf::RenderWindow &window, sf::Text *levelPassedText)
 }
 
 void redrawFrame(sf::RenderWindow &window, std::vector<Brick> bricks, sf::RectangleShape field, sf::RectangleShape door, int &lives,
-                 sf::Sprite playerSprite, sf::RectangleShape livesDesignationBackgr, sf::Text *levelPassedText)
+                 sf::Sprite playerSprite, sf::RectangleShape livesDesignationBackgr, sf::Text *levelPassedText, std::vector<PrizeEffect> &prizeEffects,
+                 std::vector<sf::Sprite *> &activePrizes)
 {
     window.clear(sf::Color::White);
     window.draw(background);
     window.draw(field);
     drawBricks(window, bricks);
-    drawSidebar(window, lives, playerSprite, livesDesignationBackgr);
+    drawSidebar(window, lives, playerSprite, livesDesignationBackgr, prizeEffects);
     window.draw(platform);
     window.draw(ball);
-    drawPrizes(window);
+    drawPrizes(window, activePrizes);
     if (gameState == level_lost_modal)
     {
         drawLevelLostModal(window);
     }
-    if (isPortalDoorActive())
+    if (isPortalDoorActive(prizeEffects))
     {
         window.draw(door);
     }
@@ -661,7 +670,7 @@ sf::Text *getLevelPassedText()
     return textPtr;
 }
 
-void resetGlobalVars(bool &isPaused)
+void resetVars(bool &isPaused, std::vector<PrizeEffect> &prizeEffects, std::vector<sf::Sprite *> &activePrizes)
 {
     isPaused = true;
     int selectedModalItem = 1;
@@ -699,18 +708,6 @@ void twoBalls()
 {
 }
 
-void extraLife()
-{
-}
-
-void portalDoor()
-{
-}
-
-void stickyBall()
-{
-}
-
 void applyPrizeEffect(PrizeType prizeType, int &lives, float &koeffOfPlatformExpansion, float &koeffOfBallSpeed, float &ballSpeed)
 {
     switch (prizeType)
@@ -736,12 +733,6 @@ void applyPrizeEffect(PrizeType prizeType, int &lives, float &koeffOfPlatformExp
     case extra_life:
         lives++;
         break;
-    case portal_door:
-        portalDoor();
-        break;
-    case sticky_ball:
-        stickyBall();
-        break;
     }
 }
 
@@ -757,26 +748,28 @@ void deletePtr(sf::Sprite *prizeSprite)
     delete prizeSprite;
 }
 
-void deletePrizeFromActivePrizes(sf::Sprite *prizeSprite)
+void deletePrizeFromActivePrizes(sf::Sprite *prizeSprite, std::vector<sf::Sprite *> &activePrizes)
 {
     activePrizes.erase(std::remove(activePrizes.begin(), activePrizes.end(), prizeSprite), activePrizes.end());
     deletePtr(prizeSprite);
 }
 
 void handlePrizeCollisionWithPlatform(sf::Sprite *prizeSprite, float &dt, int &lives, float &prizeStartTime, float &koeffOfPlatformExpansion,
-                                      float &koeffOfBallSpeed, float &ballSpeed)
+                                      float &koeffOfBallSpeed, float &ballSpeed, std::vector<PrizeEffect> &prizeEffects,
+                                      std::vector<sf::Sprite *> &activePrizes)
 {
     prizeStartTime = dt;
     PrizeType prizeType = getPrizeType(prizeSprite);
     applyPrizeEffect(prizeType, lives, koeffOfPlatformExpansion, koeffOfBallSpeed, ballSpeed);
-    deletePrizeFromActivePrizes(prizeSprite);
+    deletePrizeFromActivePrizes(prizeSprite, activePrizes);
     PrizeEffect effect;
     effect.prizeEffectType = getPrizeType(prizeSprite);
     effect.timeOfEffectApplying = 0;
     prizeEffects.push_back(effect);
 }
 
-void checkPrizeCollisionWithPlatform(float &dt, int &lives, float &prizeStartTime, float &koeffOfPlatformExpansion, float &koeffOfBallSpeed, float &ballSpeed)
+void checkPrizeCollisionWithPlatform(float &dt, int &lives, float &prizeStartTime, float &koeffOfPlatformExpansion, float &koeffOfBallSpeed, float &ballSpeed,
+                                     std::vector<PrizeEffect> &prizeEffects, std::vector<sf::Sprite *> &activePrizes)
 {
     const sf::FloatRect platformBounds = platform.getGlobalBounds();
     for (sf::Sprite *prizeSprite : activePrizes)
@@ -784,23 +777,24 @@ void checkPrizeCollisionWithPlatform(float &dt, int &lives, float &prizeStartTim
         const sf::FloatRect prizeBounds = prizeSprite->getGlobalBounds();
         if (prizeBounds.intersects(platformBounds))
         {
-            handlePrizeCollisionWithPlatform(prizeSprite, dt, lives, prizeStartTime, koeffOfPlatformExpansion, koeffOfBallSpeed, ballSpeed);
+            handlePrizeCollisionWithPlatform(prizeSprite, dt, lives, prizeStartTime, koeffOfPlatformExpansion, koeffOfBallSpeed, ballSpeed, prizeEffects, activePrizes);
         }
     }
 }
 
-void checkPrizeMiss()
+void checkPrizeMiss(std::vector<sf::Sprite *> &activePrizes)
 {
     for (sf::Sprite *prizeSprite : activePrizes)
     {
         const sf::FloatRect prizeBounds = prizeSprite->getGlobalBounds();
         const sf::Vector2f currPrizeSpritePos = prizeSprite->getPosition();
         if (currPrizeSpritePos.y + prizeBounds.height > BOTTOM)
-            deletePrizeFromActivePrizes(prizeSprite);
+            deletePrizeFromActivePrizes(prizeSprite, activePrizes);
     }
 }
 
-void updateFallingPrizes(float &dt, int &lives, float &prizeStartTime, float &koeffOfPlatformExpansion, float &koeffOfBallSpeed, float &ballSpeed, bool isPaused)
+void updateFallingPrizes(float &dt, int &lives, float &prizeStartTime, float &koeffOfPlatformExpansion, float &koeffOfBallSpeed, float &ballSpeed, bool isPaused,
+                         std::vector<PrizeEffect> &prizeEffects, std::vector<sf::Sprite *> &activePrizes)
 {
     if (isPaused || gameState != playing)
         return;
@@ -811,8 +805,8 @@ void updateFallingPrizes(float &dt, int &lives, float &prizeStartTime, float &ko
         const float newYpos = currPos.y + dt * prizeSpeed;
         prizeSprite->setPosition(currPos.x, newYpos);
     }
-    checkPrizeCollisionWithPlatform(dt, lives, prizeStartTime, koeffOfPlatformExpansion, koeffOfBallSpeed, ballSpeed);
-    checkPrizeMiss();
+    checkPrizeCollisionWithPlatform(dt, lives, prizeStartTime, koeffOfPlatformExpansion, koeffOfBallSpeed, ballSpeed, prizeEffects, activePrizes);
+    checkPrizeMiss(activePrizes);
 }
 
 void undoEffect(PrizeType prizeType, float &koeffOfPlatformExpansion, float &koeffOfBallSpeed, float &ballSpeed)
@@ -837,7 +831,7 @@ void undoEffect(PrizeType prizeType, float &koeffOfPlatformExpansion, float &koe
     }
 }
 
-void updatePrizeEffects(float &dt, float &koeffOfPlatformExpansion, float &koeffOfBallSpeed, float &ballSpeed, bool isPaused)
+void updatePrizeEffects(float &dt, float &koeffOfPlatformExpansion, float &koeffOfBallSpeed, float &ballSpeed, bool isPaused, std::vector<PrizeEffect> &prizeEffects)
 {
     if (isPaused || gameState != playing)
         return;
@@ -880,12 +874,23 @@ updateArrOfTimeFromCollision(std::vector<float> *timeFromCollisionWithCrackedBri
 
 void playGame(sf::RenderWindow &window)
 {
+    sf::Sprite brick;
+    std::vector<sf::Sprite *> activePrizes;
+    std::map<PrizeType, sf::Sprite *> prizesSprites = {
+        {expand_platform, &expandPlatformSprite},
+        {two_balls, &twoBallsSprite},
+        {slow_ball_down, &slowBallDownSprite},
+        {accelerate_ball, &accelerateBallSprite},
+        {extra_life, &extraLifeSprite},
+        {portal_door, &portalDoorSprite},
+        {sticky_ball, &stickyBallSprite}};
+    std::vector<PrizeEffect> prizeEffects;
     bool isPaused;
     int ballXdir;
     int ballYdir;
     float ballSpeed;
     int selectedModalItem = 1;
-    resetGlobalVars(isPaused);
+    resetVars(isPaused, prizeEffects, activePrizes);
     float prizeStartTime;
     float koeffOfPlatformExpansion = 1.0f;
     float koeffOfBallSpeed = 1.0f;
@@ -910,13 +915,13 @@ void playGame(sf::RenderWindow &window)
     switch (level)
     {
     case 1:
-        bricks = createBricksVector_1level({x : 70, y : 60}, &timeFromCollisionWithCrackedBrick, &brick);
+        bricks = createBricksVector_1level({x : 70, y : 60}, &timeFromCollisionWithCrackedBrick, &brick, &prizesSprites);
         break;
     case 2:
-        bricks = createBricksVector_2level({x : 65, y : 60}, &timeFromCollisionWithCrackedBrick, &brick);
+        bricks = createBricksVector_2level({x : 65, y : 60}, &timeFromCollisionWithCrackedBrick, &brick, &prizesSprites);
         break;
     case 3:
-        bricks = createBricksVector_3level({x : 65, y : 60}, &timeFromCollisionWithCrackedBrick, &brick);
+        bricks = createBricksVector_3level({x : 65, y : 60}, &timeFromCollisionWithCrackedBrick, &brick, &prizesSprites);
         break;
     default:
         gameState = menu_screen;
@@ -927,12 +932,13 @@ void playGame(sf::RenderWindow &window)
     {
         float dt = clock.restart().asSeconds();
         pollEvents(window, dt, isBallStuck, isPaused, selectedModalItem);
-        updateBall(ballSpeed, dt, bricks, &timeFromCollisionWithCrackedBrick, lives, timeToShowLevelPassedMsg, ballAngle, isBallStuck, ballXdir, ballYdir, isPaused);
-        updateFallingPrizes(dt, lives, prizeStartTime, koeffOfPlatformExpansion, koeffOfBallSpeed, ballSpeed, isPaused);
+        updateBall(ballSpeed, dt, bricks, &timeFromCollisionWithCrackedBrick, lives, timeToShowLevelPassedMsg, ballAngle, isBallStuck,
+                   ballXdir, ballYdir, isPaused, prizeEffects, activePrizes);
+        updateFallingPrizes(dt, lives, prizeStartTime, koeffOfPlatformExpansion, koeffOfBallSpeed, ballSpeed, isPaused, prizeEffects, activePrizes);
         updateArrOfTimeFromCollision(&timeFromCollisionWithCrackedBrick, dt);
-        updatePrizeEffects(dt, koeffOfPlatformExpansion, koeffOfBallSpeed, ballSpeed, isPaused); //обновить время действия эффектов от призов
+        updatePrizeEffects(dt, koeffOfPlatformExpansion, koeffOfBallSpeed, ballSpeed, isPaused, prizeEffects); //обновить время действия эффектов от призов
         recalcTimeToShowLevelPassedMsg(dt, timeToShowLevelPassedMsg, levelPassedText);
-        redrawFrame(window, bricks, gameField, door, lives, playerSprite, livesDesignationBackgr, levelPassedText);
+        redrawFrame(window, bricks, gameField, door, lives, playerSprite, livesDesignationBackgr, levelPassedText, prizeEffects, activePrizes);
         if (shouldLeaveGame())
         {
             cout << "return" << endl;

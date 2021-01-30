@@ -64,23 +64,3 @@ struct PrizeEffect
     PrizeType prizeEffectType;
     float timeOfEffectApplying;
 };
-
-sf::Sprite expandPlatformSprite;
-sf::Sprite twoBallsSprite;
-sf::Sprite slowBallDownSprite;
-sf::Sprite accelerateBallSprite;
-sf::Sprite extraLifeSprite;
-sf::Sprite portalDoorSprite;
-sf::Sprite stickyBallSprite;
-
-std::map<PrizeType, sf::Sprite *> prizesSprites = {
-    {expand_platform, &expandPlatformSprite},
-    {two_balls, &twoBallsSprite},
-    {slow_ball_down, &slowBallDownSprite},
-    {accelerate_ball, &accelerateBallSprite},
-    {extra_life, &extraLifeSprite},
-    {portal_door, &portalDoorSprite},
-    {sticky_ball, &stickyBallSprite}};
-
-std::vector<sf::Sprite *> activePrizes;
-std::vector<PrizeEffect> prizeEffects;
