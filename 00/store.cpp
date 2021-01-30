@@ -2,11 +2,8 @@ constexpr unsigned WINDOW_WIDTH = 800;
 constexpr unsigned WINDOW_HEIGHT = 600;
 std::string playerName = "";
 int level = 1;
-const float regularTimeOfPrizeEffect = 40;
 int scores;
 std::string highScoresStr;
-sf::Sprite brick;
-sf::Sprite platform;
 
 enum states
 {
